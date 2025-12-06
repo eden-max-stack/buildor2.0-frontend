@@ -9,15 +9,7 @@ export default function Navbar() {
       </Link>
       
       <div className="flex gap-6">
-        <Link href="/dashboard" className="hover:underline text-gray-700">
-          Dashboard
-        </Link>
-        <Link href="/recommendation-engine" className="hover:underline text-gray-700">
-          Recommendation Engine
-        </Link>
-        <Link href="/coding-practice-platform" className="hover:underline text-gray-700">
-          Coding Practice
-        </Link>
+        
       </div>
       
     </nav>
