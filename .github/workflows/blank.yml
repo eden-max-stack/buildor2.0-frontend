@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache node modules and .next cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            src/node_modules
+            src/.next/cache
+          # hash package-lock/yarn.lock inside src
+          key: ${{ runner.os }}-node-${{ hashFiles('src/**/package-lock.json', 'src/**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies (in src)
+        working-directory: src
+        run: npm ci
+
+      - name: Build (production) (in src)
+        working-directory: src
+        run: npm run build
+
+      - name: Upload build artifact (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: |
+            src/.next
+            src/package.json
+
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps (in src)
+        working-directory: src
+        run: npm ci
+
+      - name: Lint (in src)
+        working-directory: src
+        run: npm run lint || true
+
+      - name: Run tests (in src)
+        working-directory: src
+        run: npm test
+
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: ./                    # this will create ./src/.next after download if artifact had src/.next
+
+      - name: Install dependencies (in src)
+        working-directory: src
+        run: npm ci
+
+      - name: Deploy to Vercel (from src)
+        working-directory: src
+        run: npx vercel deploy --prebuilt --prod --token ${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
