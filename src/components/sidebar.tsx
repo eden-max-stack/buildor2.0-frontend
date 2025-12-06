@@ -13,7 +13,7 @@ interface SidebarProps {
     onSidebarToggle?: (isOpen: boolean) => void;
 }
 
-function Sidebar({ isOpen = true, onSidebarToggle }: SidebarProps) {
+function Sidebar({ isOpen = false, onSidebarToggle }: SidebarProps) {
     const [items, setItems] = React.useState<SidebarItem[]>([
         { name: 'Coding Practice', path: '/coding-practice-platform', open: false },
         { name: 'Recommendation Engine', path: '/recommendation-engine', open: false }
