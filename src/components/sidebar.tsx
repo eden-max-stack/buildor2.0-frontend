@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link';
 
 interface SidebarItem {
@@ -14,7 +14,7 @@ interface SidebarProps {
 }
 
 function Sidebar({ isOpen = false, onSidebarToggle }: SidebarProps) {
-    const [items, setItems] = React.useState<SidebarItem[]>([
+    const [items, ] = React.useState<SidebarItem[]>([
         { name: 'Coding Practice', path: '/coding-practice-platform', open: false },
         { name: 'Recommendation Engine', path: '/recommendation-engine', open: false }
     ]);
@@ -33,13 +33,13 @@ function Sidebar({ isOpen = false, onSidebarToggle }: SidebarProps) {
         }
     }
 
-    const handleToggleItem = (idx: number) => {
-        setItems((prev) => 
-            prev.map((item, i) =>
-                i === idx ? {... item, open: !item.open } : item
-            )
-        )
-    };
+    // const handleToggleItem = (idx: number) => {
+    //     setItems((prev) => 
+    //         prev.map((item, i) =>
+    //             i === idx ? {... item, open: !item.open } : item
+    //         )
+    //     )
+    // };
 
     return (
         <aside style={{
@@ -85,7 +85,7 @@ function Sidebar({ isOpen = false, onSidebarToggle }: SidebarProps) {
             {sidebarOpenInternal && (
                 <div style={{ padding: "0 24px 0 24px"}}>
                     <ul style={{ listStyle: "none", padding: 0, margin: 0}}>
-                        {items.map((item, idx) => (
+                        {items.map((item,) => (
                             <li key={item.name}>
                                 <div 
                                     style={{}}>
