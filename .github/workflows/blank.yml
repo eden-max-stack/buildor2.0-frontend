@@ -79,25 +79,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+  
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: next-build
-          path: ./                    # this will create ./src/.next after download if artifact had src/.next
-
-      - name: Install dependencies (in src)
-        working-directory: src
-        run: npm ci
-
+  
       - name: Deploy to Vercel (from src)
         working-directory: src
-        run: npx vercel --prod --confirm --token ${{ secrets.VERCEL_TOKEN }}
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          # show which files will be deployed (optional, helps debug)
+          echo "PWD: $(pwd)"
+          ls -la
+          ls -la src || true
+          npx vercel --prod --confirm --token "$VERCEL_TOKEN"
