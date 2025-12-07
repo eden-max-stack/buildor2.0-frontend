@@ -72,6 +72,7 @@ jobs:
         working-directory: ./src
         run: npm test
 
+
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
@@ -85,15 +86,18 @@ jobs:
         with:
           node-version: '20'
   
-      - name: Deploy to Vercel (from src)
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+  
+      - name: Pull Vercel Environment Information
         working-directory: ./src
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          # show which files will be deployed (optional, helps debug)
-          echo "PWD: $(pwd)"
-          ls -la
-          ls -la src || true
-          npx vercel --prod --confirm --token "$VERCEL_TOKEN"
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+  
+      - name: Build Project Artifacts
+        working-directory: ./src
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+  
+      - name: Deploy to Vercel
+        working-directory: ./src
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+   
