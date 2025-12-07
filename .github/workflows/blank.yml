@@ -33,11 +33,11 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install dependencies (in src)
-        working-directory: src
+        working-directory: ./src
         run: npm ci
 
       - name: Build (production) (in src)
-        working-directory: src
+        working-directory: ./src
         run: npm run build
 
       - name: Upload build artifact (optional)
@@ -61,15 +61,15 @@ jobs:
           node-version: '20'
 
       - name: Install deps (in src)
-        working-directory: src
+        working-directory: ./src
         run: npm ci
 
       - name: Lint (in src)
-        working-directory: src
+        working-directory: ./src
         run: npm run lint || true
 
       - name: Run tests (in src)
-        working-directory: src
+        working-directory: ./src
         run: npm test
 
   deploy:
@@ -86,7 +86,7 @@ jobs:
           node-version: '20'
   
       - name: Deploy to Vercel (from src)
-        working-directory: src
+        working-directory: ./src
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
