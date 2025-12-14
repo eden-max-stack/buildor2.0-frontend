@@ -17,7 +17,7 @@ export default function Navbar() {
             </Link>
         </div>
 
-        <div className="navbar-links" style={{ display: 'flex', gap: '20px', flex: 2, justifyContent: 'flex-end', alignItems: 'center', fontWeight: '550' }}>
+        <div className="navbar-links" style={{ display: 'flex', gap: '20px', flex: 2, justifyContent: 'flex-end', alignItems: 'center', color: '#1f2022' }}>
           <Link href="/leaderboard">Leaderboard</Link>
           <Link href="/coding-practice">Questions</Link>
           <Link href="/professor-portal">Professor Portal</Link>
