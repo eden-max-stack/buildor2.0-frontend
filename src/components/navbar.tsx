@@ -1,15 +1,27 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Navbar() {
   return (
-    <nav className="bg-[#d9d9d9] px-6 py-4 shadow-md flex items-center justify-between">
+    <nav className="bg-white px-6 py-4 shadow-md">
       
-      <Link href="/" className="text-xl font-bold text-gray-800">
-        Buildor
-      </Link>
-      
-      <div className="flex gap-6">
-        
+      <div className="navbar-items" style={{ display: 'flex', justifyContent: 'space-between'}}>
+        <div className="buildor-icon" style={{ flex: 1 }}>
+          <Link href="/">
+            <Image 
+              src="/buildor_logo_light.png" 
+              alt="Buildor Icon" 
+              width={100} 
+              height={200} 
+            />
+            </Link>
+        </div>
+
+        <div className="navbar-links" style={{ display: 'flex', gap: '20px', flex: 2, justifyContent: 'flex-end', alignItems: 'center', fontWeight: '550' }}>
+          <Link href="/leaderboard">Leaderboard</Link>
+          <Link href="/coding-practice">Questions</Link>
+          <Link href="/professor-portal">Professor Portal</Link>
+        </div>
       </div>
       
     </nav>
