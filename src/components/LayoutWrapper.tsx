@@ -10,8 +10,8 @@ interface LayoutWrapperProps {
 function LayoutWrapper({ children }: LayoutWrapperProps) {
   return (
     <div>
-        <Navbar />
-        <Sidebar />
+        {/* <Navbar />
+        <Sidebar /> */}
         {children}
     </div>
   )
