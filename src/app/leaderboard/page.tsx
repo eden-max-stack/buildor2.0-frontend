@@ -97,11 +97,11 @@ function ProfileModal({ student, onClose }: ProfileModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div
-        className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-screen overflow-y-auto"
+        className="bg-card rounded-xl shadow-xl max-w-md w-full max-h-screen overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header with rank */}
-        <div className="bg-gradient-to-r from-brand-blue to-brand-blue/80 text-white p-6 relative">
+        <div className="bg-gradient-to-r from-brand-blue to-brand-blue/80 dark:from-brand-blue/70 dark:to-brand-blue/50 text-white p-6 relative">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-white/80 hover:text-white"
@@ -123,60 +123,60 @@ function ProfileModal({ student, onClose }: ProfileModalProps) {
         <div className="p-6 space-y-6">
           {/* Skills and Level */}
           <div>
-            <h3 className="font-bold text-brand-dark mb-3 flex items-center gap-2">
+            <h3 className="font-bold text-brand-dark mb-3 flex items-center gap-2 dark:text-white">
               <Code2 className="w-4 h-4 text-brand-blue" />
               Skill Level
             </h3>
             <div className="flex items-center gap-3">
-              <div className="px-3 py-1 bg-brand-amber text-brand-dark rounded-full text-sm font-semibold">
+              <div className="px-3 py-1 bg-brand-amber text-brand-dark dark:text-white dark:text-amber-200/70 dark:bg-amber-500/30 dark:border-amber-800 rounded-full text-sm font-semibold">
                 {student.skillLevel}
               </div>
-              <p className="text-gray-600">{student.problemsSolved} problems solved</p>
+              <p className="text-gray-600 dark:text-gray-300">{student.problemsSolved} problems solved</p>
             </div>
           </div>
 
           {/* Academic Info */}
           <div>
-            <h3 className="font-bold text-brand-dark mb-3">Academic Information</h3>
+            <h3 className="font-bold text-brand-dark mb-3 dark:text-white">Academic Information</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">University:</span>
-                <span className="font-semibold text-brand-dark">{student.university}</span>
+                <span className="text-gray-600 dark:text-gray-300">University:</span>
+                <span className="font-semibold text-brand-dark dark:text-blue-300">{student.university}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Department:</span>
-                <span className="font-semibold text-brand-dark">{student.department}</span>
+                <span className="text-gray-600 dark:text-gray-300">Department:</span>
+                <span className="font-semibold text-brand-dark dark:text-blue-300">{student.department}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Year:</span>
-                <span className="font-semibold text-brand-dark">{student.year}</span>
+                <span className="text-gray-600 dark:text-gray-300">Year:</span>
+                <span className="font-semibold text-brand-dark dark:text-blue-300">{student.year}</span>
               </div>
             </div>
           </div>
 
           {/* Projects and Connections */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4 text-center">
-              <p className="text-2xl font-bold text-brand-blue">{student.projects}</p>
-              <p className="text-sm text-gray-600">Projects</p>
+            <div className="bg-blue-50 rounded-lg p-4 text-center dark:bg-blue-900/20">
+              <p className="text-2xl font-bold text-brand-blue dark:text-brand-blue">{student.projects}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Projects</p>
             </div>
-            <div className="bg-amber-50 rounded-lg p-4 text-center">
-              <p className="text-2xl font-bold text-brand-amber">{student.connections}</p>
-              <p className="text-sm text-gray-600">Connections</p>
+            <div className="bg-amber-50 rounded-lg p-4 text-center dark:bg-amber-900/20">
+              <p className="text-2xl font-bold text-brand-amber dark:text-brand-amber">{student.connections}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Connections</p>
             </div>
           </div>
 
           {/* GitHub */}
           <div>
-            <h3 className="font-bold text-brand-dark mb-3 flex items-center gap-2">
-              <Github className="w-4 h-4 text-brand-dark" />
+              <h3 className="font-bold text-brand-dark mb-3 flex items-center gap-2 dark:text-white">
+              <Github className="w-4 h-4 text-brand-dark dark:text-white" />
               GitHub
             </h3>
             <a
               href={`https://${student.github}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-brand-blue hover:underline text-sm"
+              className="text-brand-blue hover:underline text-sm dark:text-blue-300"
             >
               {student.github}
             </a>
@@ -185,7 +185,7 @@ function ProfileModal({ student, onClose }: ProfileModalProps) {
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="w-full bg-brand-blue text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+            className="w-full bg-brand-blue text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors dark:bg-brand-blue dark:text-white"
           >
             Close
           </button>
@@ -208,10 +208,11 @@ export default function Leaderboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-brand-dark mb-4">
+          { /* add dark mode */ }
+          <h1 className="text-4xl font-bold text-brand-dark dark:text-white smb-4">
             Student Leaderboard
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 dark:text-gray-400 text-lg">
             Compete with peers and climb the rankings by solving DSA problems.
           </p>
         </div>
@@ -219,13 +220,13 @@ export default function Leaderboard() {
         {/* Search Bar */}
         <div className="mb-8">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-100 w-5 h-5" />
             <input
               type="text"
               placeholder="Search students by name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all"
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all dark:bg-blue-800/10"
             />
           </div>
         </div>
@@ -234,23 +235,23 @@ export default function Leaderboard() {
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b-2 border-brand-blue/20 bg-gray-50">
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark">
+              <tr className="border-b-2 border-brand-blue/20 bg-gray-50 dark:bg-blue-900/20">
+                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
                   Rank
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark">
+                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
                   Name
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark">
+                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
                   Problems Solved
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark">
+                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
                   Skill Level
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark">
+                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
                   University
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark">
+                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
                   Action
                 </th>
               </tr>
@@ -259,7 +260,7 @@ export default function Leaderboard() {
               {filteredStudents.map((student) => (
                 <tr
                   key={student.id}
-                  className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/10 transition-colors cursor-pointer"
                   onClick={() => setSelectedStudent(student)}
                 >
                   <td className="px-6 py-4">
@@ -270,35 +271,35 @@ export default function Leaderboard() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="font-semibold text-brand-dark">{student.name}</p>
+                    <p className="font-semibold text-brand-dark dark:text-gray-400">{student.name}</p>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Code2 className="w-4 h-4 text-brand-amber" />
-                      <span className="text-gray-700">{student.problemsSolved}</span>
+                      <span className="text-gray-700 dark:text-gray-400">{student.problemsSolved}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-semibold ${
                         student.skillLevel === "Expert"
-                          ? "bg-red-100 text-brand-red"
+                          ? "bg-red-100 text-brand-red dark:text-red-300 dark:bg-red-900/50"
                           : student.skillLevel === "Advanced"
-                          ? "bg-brand-blue/10 text-brand-blue"
-                          : "bg-amber-100 text-brand-amber"
+                          ? "bg-brand-blue/10 text-brand-blue dark:text-blue-300 dark:bg-blue-900/50"
+                          : "bg-amber-100 text-brand-amber dark:text-amber-200/70 dark:bg-amber-500/30"
                       }`}
                     >
                       {student.skillLevel}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-700">{student.university}</td>
+                  <td className="px-6 py-4 text-gray-700 dark:text-gray-400">{student.university}</td>
                   <td className="px-6 py-4">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedStudent(student);
                       }}
-                      className="text-brand-blue hover:text-blue-600 font-semibold flex items-center gap-1"
+                      className="text-brand-blue hover:text-blue-600 font-semibold flex items-center gap-1 dark:text-blue-400/100 dark:hover:text-blue-800"
                     >
                       View <ChevronRight className="w-4 h-4" />
                     </button>

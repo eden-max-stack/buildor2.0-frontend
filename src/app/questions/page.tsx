@@ -272,11 +272,11 @@ export default function Questions() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Easy":
-        return "bg-emerald-100 text-emerald-700 border-emerald-300";
+        return "bg-emerald-100 text-emerald-700 border-emerald-300 dark:text-emerald-300 dark:bg-emerald-900/50 dark:border-emerald-700";
       case "Medium":
-        return "bg-brand-amber text-brand-dark border-brand-amber";
+        return "bg-brand-amber text-brand-dark border-brand-amber dark:text-amber-200/70 dark:bg-amber-500/30 dark:border-amber-500";
       case "Hard":
-        return "bg-brand-red text-white border-brand-red";
+        return "bg-brand-red text-white border-brand-red c";
       default:
         return "bg-gray-100 text-gray-700 border-gray-300";
     }
@@ -287,10 +287,10 @@ export default function Questions() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-brand-dark mb-4">
+          <h1 className="text-4xl font-bold text-brand-dark dark:text-white mb-4">
             Question Bank
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 dark:text-gray-400 text-lg">
             Practice data structures and algorithms with {mockQuestions.length} problems.
           </p>
         </div>
@@ -298,13 +298,13 @@ export default function Questions() {
         {/* Search Bar */}
         <div className="mb-8">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-100 w-5 h-5" />
             <input
               type="text"
               placeholder="Search problems by title..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all"
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all dark:bg-blue-800/10"
             />
           </div>
         </div>
@@ -313,7 +313,7 @@ export default function Questions() {
         <div className="mb-8 space-y-4">
           {/* Difficulty Filter */}
           <div>
-            <label className="block text-sm font-semibold text-brand-dark mb-3 flex items-center gap-2">
+            <label className="block text-sm font-semibold text-brand-dark mb-3 flex items-center gap-2 dark:text-gray-100">
               <Filter className="w-4 h-4" />
               Difficulty
             </label>
@@ -324,8 +324,8 @@ export default function Questions() {
                   onClick={() => setSelectedDifficulty(difficulty)}
                   className={`px-4 py-2 rounded-lg font-medium transition-all ${
                     selectedDifficulty === difficulty
-                      ? "bg-brand-blue text-white border-2 border-brand-blue"
-                      : "border-2 border-gray-300 text-gray-700 hover:border-brand-blue"
+                      ? "bg-brand-blue text-white border-2 border-brand-blue dark:bg-blue-600/70"
+                      : "border-2 border-gray-300 text-gray-700 hover:border-brand-blue dark:text-gray-100 dark:border-gray-700 hover:dark:border-blue-600"
                   }`}
                 >
                   {difficulty}
@@ -336,7 +336,7 @@ export default function Questions() {
 
           {/* Tag Filter */}
           <div>
-            <label className="block text-sm font-semibold text-brand-dark mb-3">
+            <label className="block text-sm font-semibold text-brand-dark dark:text-gray-200 mb-3">
               Tags
             </label>
             <div className="flex flex-wrap gap-2">
@@ -346,8 +346,8 @@ export default function Questions() {
                   onClick={() => toggleTag(tag)}
                   className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
                     selectedTags.includes(tag)
-                      ? "bg-brand-blue text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      ? "bg-brand-blue text-white dark:bg-blue-600/70"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-blue-300/10 dark:text-gray-400 hover:dark:bg-blue-700/20"
                   }`}
                 >
                   {tag}
@@ -366,21 +366,21 @@ export default function Questions() {
         {/* Problems Table */}
         <div className="overflow-x-auto rounded-lg border border-gray-200">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b-2 border-gray-200">
+            <thead className="bg-gray-50 border-b-2 border-gray-200 dark:bg-blue-900/20">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark w-1/2">
+                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark w-1/2 dark:text-white">
                   Title
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark w-1/6">
+                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark w-1/6 dark:text-white">
                   Difficulty
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark">
+                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
                   Acceptance
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark">
+                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
                   Solved
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark">
+                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
                   Action
                 </th>
               </tr>
@@ -390,19 +390,19 @@ export default function Questions() {
                 filteredQuestions.map((question) => (
                   <tr
                     key={question.id}
-                    className="border-b border-gray-200 hover:bg-blue-50 transition-colors cursor-pointer"
+                    className="border-b border-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700/10 transition-colors cursor-pointer"
                     onClick={() => handleQuestionClick(question)}
                   >
                     <td className="px-6 py-4">
                       <div className="space-y-2">
-                        <p className="font-semibold text-brand-dark">
+                        <p className="font-semibold text-brand-dark dark:text-gray-400">
                           {question.id}. {question.title}
                         </p>
                         <div className="flex flex-wrap gap-1">
                           {question.tags.map((tag) => (
                             <span
                               key={tag}
-                              className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
+                              className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded dark:bg-blue-300/10 dark:text-gray-400"
                             >
                               {tag}
                             </span>
@@ -419,10 +419,10 @@ export default function Questions() {
                         {question.difficulty}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-700 font-medium">
+                    <td className="px-6 py-4 text-gray-700 dark:text-gray-400 font-medium">
                       {question.acceptance}%
                     </td>
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
                       {question.solved.toLocaleString()}
                     </td>
                     <td className="px-6 py-4">
@@ -431,7 +431,7 @@ export default function Questions() {
                           e.stopPropagation();
                           handleQuestionClick(question);
                         }}
-                        className="text-brand-blue hover:text-blue-600 font-semibold transition-colors"
+                        className="text-brand-blue hover:text-blue-600 font-semibold transition-colors dark:text-blue-400/100 dark:hover:text-blue-800"
                       >
                         Solve
                       </button>
