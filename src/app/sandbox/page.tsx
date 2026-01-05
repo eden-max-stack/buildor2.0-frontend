@@ -4,6 +4,7 @@ import Layout from "@/components/Layout";
 import { Code2, Lightbulb, Clock, Play, Eye, X, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import * as d3 from "d3";
 
 interface Question {
   id: number;
@@ -14,11 +15,18 @@ interface Question {
   solved: number;
 }
 
-interface GraphData {
-  ast: any;
+interface FunctionAnalysis {
+  name: string;
+  ast_node_id: number;
   cfg: any;
   dfg: any;
+}
+
+interface GraphData {
+  ast: any;
+  functions: FunctionAnalysis[];
   source_code: string;
+  error?: string;
 }
 
 const allProblems: Question[] = [
@@ -57,6 +65,12 @@ export default function CodeSandbox() {
   const [visualizationData, setVisualizationData] = useState<GraphData | null>(null);
   const [showVisualization, setShowVisualization] = useState(false);
   const [activeTab, setActiveTab] = useState<'ast' | 'cfg' | 'dfg'>('cfg');
+  const [selectedFunctionIndex, setSelectedFunctionIndex] = useState<number>(0); // For multi-function support
+  const [showFunctionSelector, setShowFunctionSelector] = useState(false);
+
+  const astSvgRef = useRef<SVGSVGElement>(null);
+  const cfgSvgRef = useRef<SVGSVGElement>(null);
+  const dfgSvgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     const questionId = parseInt(searchParams?.get("id") || "0");
@@ -123,13 +137,346 @@ export default function CodeSandbox() {
       const data = await response.json();
       setVisualizationData(data);
       setShowVisualization(true);
-      setOutput("✓ Visualization generated successfully!");
+      setSelectedFunctionIndex(0); // Reset to first function
+      setOutput(`✓ Visualization generated successfully! Found ${data.functions?.length || 0} function(s).`);
     } catch (error) {
       setOutput(`Error generating visualization: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsVisualizing(false);
     }
   };
+
+  // Get currently selected function's data
+  const getCurrentFunction = () => {
+    if (!visualizationData?.functions?.length) return null;
+    return visualizationData.functions[selectedFunctionIndex];
+  };
+
+  // D3.js visualization functions
+  const renderAST = (astData: any, svgRef: React.RefObject<SVGSVGElement>) => {
+    if (!svgRef.current || !astData) return;
+
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
+
+    const width = svgRef.current.clientWidth || 800;
+    const height = 600;
+
+    // Set SVG dimensions explicitly
+    svg.attr("width", width).attr("height", height);
+
+    const g = svg.append("g");
+
+    // Create tree layout with proper spacing
+    const treeLayout = d3.tree()
+      .size([width - 100, height - 100])
+      .separation((a, b) => (a.parent === b.parent ? 2 : 3));
+    
+    // Convert AST to d3 hierarchy
+    const root = d3.hierarchy(astData.root, (d) => d.children);
+    const treeData = treeLayout(root);
+
+    // Add zoom behavior
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 3])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+      });
+    svg.call(zoom as any);
+
+    // Draw links
+    g.selectAll(".link")
+      .data(treeData.links())
+      .enter()
+      .append("path")
+      .attr("class", "link")
+      .attr("d", d3.linkVertical()
+        .x((d: any) => d.x)
+        .y((d: any) => d.y) as any)
+      .attr("fill", "none")
+      .attr("stroke", "#94a3b8")
+      .attr("stroke-width", 2);
+
+    // Draw nodes
+    const node = g.selectAll(".node")
+      .data(treeData.descendants())
+      .enter()
+      .append("g")
+      .attr("class", "node")
+      .attr("transform", (d: any) => `translate(${d.x},${d.y})`);
+
+    node.append("circle")
+      .attr("r", 8)
+      .attr("fill", (d: any) => {
+        if (d.data.type === "function_definition") return "#3b82f6";
+        if (d.data.type === "if_statement") return "#10b981";
+        if (d.data.type === "assignment") return "#f59e0b";
+        return "#6366f1";
+      })
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 2);
+
+    node.append("text")
+      .attr("x", 0)
+      .attr("y", -15)
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "middle")
+      .attr("font-size", "11px")
+      .attr("font-weight", "600")
+      .attr("fill", "#ffffff")
+      .attr("text-shadow", "0 1px 2px rgba(0,0,0,0.5)")
+      .attr("pointer-events", "none")
+      .attr("paint-order", "stroke")
+      .attr("stroke", "#000000")
+      .attr("stroke-width", "0.3px")
+      .text((d: any) => d.data.type);
+
+    // Center the tree with better calculation
+    const bounds = g.node()?.getBBox();
+    if (bounds && bounds.width > 0 && bounds.height > 0) {
+      const fullWidth = width;
+      const fullHeight = height;
+      const midX = bounds.x + bounds.width / 2;
+      const midY = bounds.y + bounds.height / 2;
+      const scale = Math.min(0.9, fullWidth / bounds.width, fullHeight / bounds.height);
+      
+      svg.transition()
+        .duration(750)
+        .call(zoom.transform as any, d3.zoomIdentity
+          .translate(fullWidth / 2, fullHeight / 2)
+          .scale(scale)
+          .translate(-midX, -midY));
+    } else {
+      // Default centering if bounds calculation fails
+      svg.call(zoom.transform as any, d3.zoomIdentity
+        .translate(width / 2, 50)
+        .scale(0.8));
+    }
+  };
+
+  const renderCFG = (cfgData: any, svgRef: React.RefObject<SVGSVGElement>) => {
+    if (!svgRef.current || !cfgData) return;
+
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
+
+    const width = svgRef.current.clientWidth;
+    const height = 400;
+
+    const g = svg.append("g");
+
+    // Create force simulation
+    const simulation = d3.forceSimulation(cfgData.nodes)
+      .force("link", d3.forceLink(cfgData.edges).id((d: any) => d.id).distance(200))
+      .force("charge", d3.forceManyBody().strength(-500))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("collision", d3.forceCollide().radius(70));
+
+    // Add zoom
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 3])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+      });
+    svg.call(zoom as any);
+
+    // Draw edges
+    const link = g.selectAll(".link")
+      .data(cfgData.edges)
+      .enter()
+      .append("line")
+      .attr("class", "link")
+      .attr("stroke", "#94a3b8")
+      .attr("stroke-width", 2)
+      .attr("marker-end", "url(#arrowhead)");
+
+    // Add arrowhead marker
+    svg.append("defs").append("marker")
+      .attr("id", "arrowhead")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 25)
+      .attr("refY", 0)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,-5L10,0L0,5")
+      .attr("fill", "#94a3b8");
+
+    // Draw nodes
+    const node = g.selectAll(".node")
+      .data(cfgData.nodes)
+      .enter()
+      .append("g")
+      .attr("class", "node")
+      .call(d3.drag()
+        .on("start", (event, d: any) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on("drag", (event, d: any) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on("end", (event, d: any) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        }) as any);
+
+    node.append("rect")
+      .attr("width", 100)
+      .attr("height", 50)
+      .attr("x", -50)
+      .attr("y", -25)
+      .attr("rx", 5)
+      .attr("fill", (d: any) => {
+        if (d.label === "ENTRY") return "#10b981";
+        if (d.label === "EXIT") return "#ef4444";
+        return "#3b82f6";
+      })
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 2);
+
+    node.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", 5)
+      .attr("font-size", "14px")
+      .attr("font-weight", "bold")
+      .attr("fill", "#fff")
+      .text((d: any) => d.label);
+
+    // Update positions on simulation tick
+    simulation.on("tick", () => {
+      link
+        .attr("x1", (d: any) => d.source.x)
+        .attr("y1", (d: any) => d.source.y)
+        .attr("x2", (d: any) => d.target.x)
+        .attr("y2", (d: any) => d.target.y);
+
+      node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
+    });
+  };
+
+  const renderDFG = (dfgData: any, svgRef: React.RefObject<SVGSVGElement>) => {
+    if (!svgRef.current || !dfgData || dfgData.nodes.length === 0) return;
+
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
+
+    const width = svgRef.current.clientWidth;
+    const height = 400;
+
+    const g = svg.append("g");
+
+    // Create force simulation
+    const simulation = d3.forceSimulation(dfgData.nodes)
+      .force("link", d3.forceLink(dfgData.edges).id((d: any) => d.id).distance(150))
+      .force("charge", d3.forceManyBody().strength(-400))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("collision", d3.forceCollide().radius(60));
+
+    // Add zoom
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 3])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+      });
+    svg.call(zoom as any);
+
+    // Draw edges
+    const link = g.selectAll(".link")
+      .data(dfgData.edges)
+      .enter()
+      .append("g");
+
+    link.append("line")
+      .attr("stroke", "#a855f7")
+      .attr("stroke-width", 2)
+      .attr("marker-end", "url(#arrowhead-dfg)");
+
+    // Add arrowhead marker for DFG
+    svg.append("defs").append("marker")
+      .attr("id", "arrowhead-dfg")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 20)
+      .attr("refY", 0)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,-5L10,0L0,5")
+      .attr("fill", "#a855f7");
+
+    // Draw nodes
+    const node = g.selectAll(".node")
+      .data(dfgData.nodes)
+      .enter()
+      .append("g")
+      .attr("class", "node")
+      .call(d3.drag()
+        .on("start", (event, d: any) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on("drag", (event, d: any) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on("end", (event, d: any) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        }) as any);
+
+    node.append("circle")
+      .attr("r", 30)
+      .attr("fill", (d: any) => d.is_definition ? "#10b981" : "#f97316")
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 2);
+
+    node.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", 5)
+      .attr("font-size", "14px")
+      .attr("font-weight", "bold")
+      .attr("fill", "#fff")
+      .text((d: any) => d.variable);
+
+    // Update positions on simulation tick
+    simulation.on("tick", () => {
+      link.select("line")
+        .attr("x1", (d: any) => d.source.x)
+        .attr("y1", (d: any) => d.source.y)
+        .attr("x2", (d: any) => d.target.x)
+        .attr("y2", (d: any) => d.target.y);
+
+      node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
+    });
+  };
+
+  // Render visualizations when data changes
+  useEffect(() => {
+    if (visualizationData && showVisualization) {
+      if (activeTab === 'ast') {
+        renderAST(visualizationData.ast, astSvgRef);
+      } else if (activeTab === 'cfg') {
+        const currentFunction = getCurrentFunction();
+        if (currentFunction) {
+          renderCFG(currentFunction.cfg, cfgSvgRef);
+        }
+      } else if (activeTab === 'dfg') {
+        const currentFunction = getCurrentFunction();
+        if (currentFunction) {
+          renderDFG(currentFunction.dfg, dfgSvgRef);
+        }
+      }
+    }
+  }, [visualizationData, activeTab, showVisualization, selectedFunctionIndex]);
+
+  const currentFunction = getCurrentFunction();
 
   return (
     <Layout>
@@ -241,6 +588,59 @@ export default function CodeSandbox() {
               </button>
             </div>
 
+            {/* Function Selector (if multiple functions) */}
+            {visualizationData.functions && visualizationData.functions.length > 1 && (
+              <div className="bg-gray-100 dark:bg-gray-900 px-4 py-3 border-b border-gray-300 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Select Function:
+                  </span>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowFunctionSelector(!showFunctionSelector)}
+                      className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    >
+                      {currentFunction?.name || "Select function"}
+                      {showFunctionSelector ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
+                    </button>
+                    
+                    {showFunctionSelector && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10">
+                        {visualizationData.functions.map((func, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              setSelectedFunctionIndex(index);
+                              setShowFunctionSelector(false);
+                            }}
+                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                              selectedFunctionIndex === index
+                                ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300"
+                                : "text-gray-700 dark:text-gray-300"
+                            }`}
+                          >
+                            {func.name} (ID: {func.ast_node_id})
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Currently viewing: <span className="font-semibold">{currentFunction?.name}</span>
+                  {visualizationData.functions.length > 1 && (
+                    <span className="ml-2">
+                      ({selectedFunctionIndex + 1} of {visualizationData.functions.length})
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Tabs */}
             <div className="flex gap-2 bg-gray-100 dark:bg-gray-900 px-4 py-2 border-b border-gray-300 dark:border-gray-700">
               <button
@@ -280,144 +680,132 @@ export default function CodeSandbox() {
               {activeTab === 'ast' && (
                 <div className="space-y-4">
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-                    <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">AST Statistics</h4>
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Abstract Syntax Tree</h4>
+                      {currentFunction && (
+                        <span className="text-sm text-blue-600 dark:text-blue-300 font-medium">
+                          Function: {currentFunction.name}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-700 dark:text-gray-300">
                       Total Nodes: {visualizationData.ast.node_count}
                     </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                      Zoom: Scroll • Pan: Drag background • Node colors: Function (blue), If (green), Assignment (orange)
+                    </p>
                   </div>
-                  <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded text-xs overflow-auto max-h-96 text-gray-900 dark:text-gray-100">
-                    {JSON.stringify(visualizationData.ast, null, 2)}
-                  </pre>
+                  <svg
+                    ref={astSvgRef}
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
+                    style={{ height: '600px' }}
+                  />
                 </div>
               )}
 
-              {activeTab === 'cfg' && (
+              {activeTab === 'cfg' && currentFunction && (
                 <div className="space-y-4">
                   <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
-                    <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">CFG Statistics</h4>
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Control Flow Graph</h4>
+                      <span className="text-sm text-green-600 dark:text-green-300 font-medium">
+                        Function: {currentFunction.name}
+                      </span>
+                    </div>
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">Nodes:</span>
                         <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
-                          {visualizationData.cfg.nodes.length}
+                          {currentFunction.cfg.nodes.length}
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">Edges:</span>
                         <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
-                          {visualizationData.cfg.edges.length}
+                          {currentFunction.cfg.edges.length}
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">Entry ID:</span>
                         <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
-                          {visualizationData.cfg.entry_id}
+                          {currentFunction.cfg.entry_id}
                         </span>
                       </div>
                     </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                      Zoom: Scroll • Pan: Drag background • Drag nodes to reposition • Green: Entry, Red: Exit, Blue: Blocks
+                    </p>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h5 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Nodes</h5>
-                      <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-xs space-y-2 max-h-96 overflow-auto">
-                        {visualizationData.cfg.nodes.map((node: any) => (
-                          <div key={node.id} className="border-l-4 border-blue-500 pl-2 py-1">
-                            <span className="font-bold text-blue-600 dark:text-blue-400">[{node.id}]</span>{' '}
-                            <span className="text-gray-900 dark:text-gray-100">{node.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h5 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Edges</h5>
-                      <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-xs space-y-2 max-h-96 overflow-auto">
-                        {visualizationData.cfg.edges.map((edge: any, idx: number) => (
-                          <div key={idx} className="text-gray-700 dark:text-gray-300">
-                            <span className="font-bold text-green-600 dark:text-green-400">{edge.source}</span> → 
-                            <span className="font-bold text-green-600 dark:text-green-400"> {edge.target}</span>
-                            {edge.condition && (
-                              <span className="ml-2 text-purple-600 dark:text-purple-400">
-                                [{edge.condition}]
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                  <svg
+                    ref={cfgSvgRef}
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
+                    style={{ height: '400px' }}
+                  />
                 </div>
               )}
 
-              {activeTab === 'dfg' && (
+              {activeTab === 'dfg' && currentFunction && (
                 <div className="space-y-4">
-                  <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-4">
-                    <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">DFG Statistics</h4>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Nodes:</span>
-                        <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
-                          {visualizationData.dfg.nodes.length}
+                  {currentFunction.dfg.nodes.length === 0 ? (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Data Flow Graph</h4>
+                        <span className="text-sm text-yellow-600 dark:text-yellow-300 font-medium">
+                          Function: {currentFunction.name}
                         </span>
                       </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Variables:</span>
-                        <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
-                          {Object.keys(visualizationData.dfg.definitions).length}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Data Flows:</span>
-                        <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
-                          {visualizationData.dfg.edges.length}
-                        </span>
-                      </div>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        No data flow information available for this function.
+                      </p>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h5 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Definitions</h5>
-                      <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded text-sm space-y-2 max-h-96 overflow-auto">
-                        {visualizationData.dfg.nodes
-                          .filter((node: any) => node.is_definition)
-                          .map((node: any) => (
-                            <div key={node.id} className="border-l-4 border-green-500 pl-2 py-1">
-                              <span className="font-bold text-green-600 dark:text-green-400">[{node.id}]</span>{' '}
-                              <span className="font-mono text-gray-900 dark:text-gray-100">{node.variable}</span> :=
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h5 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Uses</h5>
-                      <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded text-sm space-y-2 max-h-96 overflow-auto">
-                        {visualizationData.dfg.nodes
-                          .filter((node: any) => !node.is_definition)
-                          .map((node: any) => (
-                            <div key={node.id} className="border-l-4 border-orange-500 pl-2 py-1">
-                              <span className="font-bold text-orange-600 dark:text-orange-400">[{node.id}]</span>{' '}
-                              <span className="font-mono text-gray-900 dark:text-gray-100">{node.variable}</span>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h5 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Data Flow Edges</h5>
-                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-sm space-y-2 max-h-64 overflow-auto">
-                      {visualizationData.dfg.edges.map((edge: any, idx: number) => (
-                        <div key={idx} className="text-gray-700 dark:text-gray-300">
-                          <span className="font-bold text-purple-600 dark:text-purple-400">[{edge.source}]</span>{' '}
-                          <span className="font-mono text-gray-900 dark:text-gray-100">{edge.variable}</span> →{' '}
-                          <span className="font-bold text-purple-600 dark:text-purple-400">[{edge.target}]</span>
+                  ) : (
+                    <>
+                      <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Data Flow Graph</h4>
+                          <span className="text-sm text-purple-600 dark:text-purple-300 font-medium">
+                            Function: {currentFunction.name}
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">Nodes:</span>
+                            <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
+                              {currentFunction.dfg.nodes.length}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">Variables:</span>
+                            <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
+                              {Object.keys(currentFunction.dfg.definitions).length}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">Data Flows:</span>
+                            <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
+                              {currentFunction.dfg.edges.length}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                          Zoom: Scroll • Pan: Drag background • Drag nodes to reposition • Green: Definitions, Orange: Uses
+                        </p>
+                      </div>
+                      <svg
+                        ref={dfgSvgRef}
+                        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
+                        style={{ height: '400px' }}
+                      />
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Error Message */}
+              {visualizationData.error && (
+                <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+                  <p className="text-red-600 dark:text-red-300 font-medium">Error:</p>
+                  <p className="text-red-500 dark:text-red-400 text-sm">{visualizationData.error}</p>
                 </div>
               )}
             </div>
