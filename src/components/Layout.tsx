@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Menu, X, Moon, Sun } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,10 +10,10 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Check localStorage for saved preference
+    // Only run once on mount
     const savedTheme = localStorage.getItem("theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const isDark = savedTheme === "dark" || (!savedTheme && prefersDark);
@@ -34,10 +34,16 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const toggleDarkMode = () => {
+    if (darkMode === null) return;
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
     applyTheme(newDarkMode);
   };
+
+  // Don't render until darkMode is initialized
+  if (darkMode === null) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors">

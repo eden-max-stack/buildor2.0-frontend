@@ -2,12 +2,13 @@
 
 import Navbar from "./navbar";
 import Sidebar from "./sidebar";
+import { ReactNode } from "react";
 
 interface LayoutWrapperProps {
-    children: React.ReactNode;
+    children: ReactNode;
 }
 
-function LayoutWrapper({ children }: LayoutWrapperProps) {
+const LayoutWrapper = ({ children }: LayoutWrapperProps) => {
   return (
     <div>
         {/* <Navbar />
