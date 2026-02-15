@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Menu, X, Moon, Sun } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +13,10 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState<boolean | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
     // Only run once on mount
@@ -20,6 +26,27 @@ export default function Layout({ children }: LayoutProps) {
 
     setDarkMode(isDark);
     applyTheme(isDark);
+  }, []);
+
+  useEffect(() => {
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null);
+        setLoading(false);
+      }
+    );
+
+    // Also check on initial mount
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    // Cleanup subscription
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const applyTheme = (isDark: boolean) => {
@@ -38,6 +65,20 @@ export default function Layout({ children }: LayoutProps) {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
     applyTheme(newDarkMode);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+      if (response.ok) {
+        setUser(null);
+        router.push("/auth/login");
+      } else {
+        console.error("Logout failed");
+      }
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   return (
@@ -103,6 +144,41 @@ const builder = new Algorithm();`}</div>
                 <Moon className="w-5 h-5 text-brand-blue" />
               )}
             </button>
+            
+            {/* User Greeting and Logout */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginLeft: '20px', paddingLeft: '20px', borderLeft: '1px solid #e0e0e0' }}>
+              {!loading && user ? (
+                <>
+                  <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                    Hi {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#ff6b6b',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ff5252')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ff6b6b')}
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : !loading ? (
+                <Link href="/auth/login" style={{ fontSize: '14px', fontWeight: '500', color: '#1f2022', textDecoration: 'none' }}>
+                  Sign In
+                </Link>
+              ) : (
+                <span style={{ fontSize: '14px' }}>Loading...</span>
+              )}
+            </div>
           </div>
 
           {/* Mobile Menu Controls */}
