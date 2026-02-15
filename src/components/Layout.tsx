@@ -40,11 +40,6 @@ export default function Layout({ children }: LayoutProps) {
     applyTheme(newDarkMode);
   };
 
-  // Don't render until darkMode is initialized
-  if (darkMode === null) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors">
       {/* Subtle background code pattern */}
