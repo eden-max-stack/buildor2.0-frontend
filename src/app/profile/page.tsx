@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { ProfileProps, TabName, SolvedQuestion, DifficultyLevel } from './models';
 import { mockProfileData } from './mockData';
+import { redirect } from 'next/navigation';
 
 /**
  * Profile Component
@@ -81,7 +82,8 @@ export default function Profile({
                   {leftProfileCard?.profileDesc || "Full-stack enthusiast building scalable apps."}
                 </p>
 
-                <button className="w-full mb-6 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium transition-colors text-sm flex items-center justify-center gap-2">
+                <button className="w-full mb-6 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium transition-colors text-sm flex items-center justify-center gap-2"
+                onClick={() => redirect("/profile/settings")}>
                   <Settings className="w-4 h-4" /> Edit Profile
                 </button>
 
