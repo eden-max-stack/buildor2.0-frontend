@@ -16,3 +16,19 @@
 
 ## Open your browser and navigate to:
 - *http://localhost:3000*
+
+# FINAL API FLOW
+
+## Registration:
+
+- register → supabase auth → insert profile → insert settings
+
+
+## Profile Page:
+
+- page.tsx → settings-api.ts → /api/profile → Supabase
+
+
+## Settings Page:
+
+- page.tsx → settings-api.ts → /api/profile-settings → Supabase

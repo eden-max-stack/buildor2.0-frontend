@@ -12,10 +12,10 @@ import {
 import { mockUserSettings, mockApiResponses } from './mockData';
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'BACKEND_URL_ROUTE';
+const API_BASE_URL = '';
 
 // Temporarily use mock data for development
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 // Helper function for API requests
 async function apiRequest<T>(
@@ -61,20 +61,23 @@ async function apiRequest<T>(
  * Fetch all user settings
  */
 export async function fetchUserSettings(): Promise<ApiResponse<UserSettings>> {
-  if (USE_MOCK_DATA) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: mockUserSettings,
-        });
-      }, 500);
-    });
+  try {
+    const response = await fetch(`/api/profile`);
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      data,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch settings',
+    };
   }
-  return apiRequest<UserSettings>('/api/settings', {
-    method: 'GET',
-  });
 }
+
 
 /**
  * Update public profile settings
@@ -82,21 +85,30 @@ export async function fetchUserSettings(): Promise<ApiResponse<UserSettings>> {
 export async function updatePublicProfile(
   data: PublicProfileUpdatePayload
 ): Promise<ApiResponse<SettingsUpdateResponse>> {
-  if (USE_MOCK_DATA) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: mockApiResponses.success as SettingsUpdateResponse,
-        });
-      }, 500);
+  try {
+    const response = await fetch(`/api/profile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
     });
+
+    const result = await response.json();
+
+    return {
+      success: response.ok,
+      data: result,
+      error: result?.error,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update profile',
+    };
   }
-  return apiRequest<SettingsUpdateResponse>('/api/settings/public-profile', {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
 }
+
 
 /**
  * Upload profile avatar
@@ -204,21 +216,30 @@ export async function deleteAccount(
 export async function updateAppearance(
   data: AppearanceUpdatePayload
 ): Promise<ApiResponse<SettingsUpdateResponse>> {
-  if (USE_MOCK_DATA) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: mockApiResponses.success as SettingsUpdateResponse,
-        });
-      }, 500);
+  try {
+    const response = await fetch(`/api/profile-settings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
     });
+
+    const result = await response.json();
+
+    return {
+      success: response.ok,
+      data: result,
+      error: result?.error,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update appearance',
+    };
   }
-  return apiRequest<SettingsUpdateResponse>('/api/settings/appearance', {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
 }
+
 
 /**
  * Update notification preferences
@@ -226,21 +247,30 @@ export async function updateAppearance(
 export async function updateNotifications(
   data: NotificationUpdatePayload
 ): Promise<ApiResponse<SettingsUpdateResponse>> {
-  if (USE_MOCK_DATA) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: mockApiResponses.success as SettingsUpdateResponse,
-        });
-      }, 500);
+  try {
+    const response = await fetch(`/api/profile-settings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
     });
+
+    const result = await response.json();
+
+    return {
+      success: response.ok,
+      data: result,
+      error: result?.error,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update notifications',
+    };
   }
-  return apiRequest<SettingsUpdateResponse>('/api/settings/notifications', {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
 }
+
 
 // --- HELPER FUNCTIONS ---
 
