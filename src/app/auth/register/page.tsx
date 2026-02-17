@@ -73,14 +73,48 @@ export default function Register() {
       }
 
       if (data.user) {
-        router.push('/');
+        const userId = data.user.id;
+        // Save profile
+        await fetch("/api/profile", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: userId,
+            fullName: formData.fullName,
+            email: formData.email,
+            username: formData.username,
+            avatar: formData.avatar,
+          }),
+        });
+
+        // Save default settings
+        await fetch("/api/profile-settings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: userId,
+            theme: "dark",
+            emailNotifications: true,
+            pushNotifications: true,
+            marketingEmails: false,
+            language: "en",
+            visibility: "public",
+          }),
+        });
+
+        router.push("/");
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   }
+      
 
   async function signUpWithGoogle() {
     setError(null);
