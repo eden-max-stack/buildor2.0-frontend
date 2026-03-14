@@ -9,17 +9,27 @@ export default function Index() {
       <section className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50 to-white dark:from-gray-900 dark:via-blue-900/20 dark:to-gray-900 transition-colors">
         {/* Subtle Code Background Pattern */}
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none overflow-hidden">
-          <div className="absolute top-0 left-0 text-8xl font-mono text-brand-blue/20">{"{ }"}</div>
-          <div className="absolute top-20 right-10 text-6xl font-mono text-brand-amber/20">{"=>"}</div>
-          <div className="absolute bottom-20 left-20 text-7xl font-mono text-brand-blue/15">{"</>"}</div>
-          <div className="absolute bottom-40 right-0 text-9xl font-mono text-brand-dark/10">{"( )"}</div>
+          <div className="absolute top-0 left-0 text-8xl font-mono text-brand-blue/20">
+            {"{ }"}
+          </div>
+          <div className="absolute top-20 right-10 text-6xl font-mono text-brand-amber/20">
+            {"=>"}
+          </div>
+          <div className="absolute bottom-20 left-20 text-7xl font-mono text-brand-blue/15">
+            {"</>"}
+          </div>
+          <div className="absolute bottom-40 right-0 text-9xl font-mono text-brand-dark/10">
+            {"( )"}
+          </div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-block mb-4 px-3 py-1 bg-brand-blue/10 border border-brand-blue/30 rounded-full">
-                <p className="text-xs font-mono text-brand-blue uppercase tracking-widest">Advanced DSA Platform</p>
+                <p className="text-xs font-mono text-brand-blue uppercase tracking-widest">
+                  Advanced DSA Platform
+                </p>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-brand-dark dark:text-white mb-6 leading-tight">
                 Master DSA Through
@@ -28,7 +38,9 @@ export default function Index() {
                 </span>
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-                Join thousands of students solving data structures and algorithms problems. Compete on the leaderboard, collaborate with peers, and track your progress.
+                Join thousands of students solving data structures and
+                algorithms problems. Compete on the leaderboard, collaborate
+                with peers, and track your progress.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
@@ -55,23 +67,36 @@ export default function Index() {
                   <div className="w-3 h-3 rounded-full bg-brand-red"></div>
                   <div className="w-3 h-3 rounded-full bg-brand-amber"></div>
                   <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                  <span className="text-xs text-gray-400 ml-auto font-mono">platform.ts</span>
+                  <span className="text-xs text-gray-400 ml-auto font-mono">
+                    platform.ts
+                  </span>
                 </div>
 
                 <div className="space-y-5">
                   {/* Code-like Content */}
                   <div className="font-mono text-sm space-y-3">
                     <div className="text-gray-400">
-                      <span className="text-brand-amber">const</span> <span className="text-blue-300">platform</span> <span className="text-brand-amber">=</span> <span className="text-green-400">{"{}"}</span>
+                      <span className="text-brand-amber">const</span>{" "}
+                      <span className="text-blue-300">platform</span>{" "}
+                      <span className="text-brand-amber">=</span>{" "}
+                      <span className="text-green-400">{"{}"}</span>
                     </div>
                     <div className="text-gray-400 pl-4">
-                      <span className="text-blue-300">problems</span><span className="text-brand-amber">:</span> <span className="text-orange-300">25</span><span className="text-brand-amber">,</span>
+                      <span className="text-blue-300">problems</span>
+                      <span className="text-brand-amber">:</span>{" "}
+                      <span className="text-orange-300">25</span>
+                      <span className="text-brand-amber">,</span>
                     </div>
                     <div className="text-gray-400 pl-4">
-                      <span className="text-blue-300">categories</span><span className="text-brand-amber">:</span> <span className="text-orange-300">7</span><span className="text-brand-amber">,</span>
+                      <span className="text-blue-300">categories</span>
+                      <span className="text-brand-amber">:</span>{" "}
+                      <span className="text-orange-300">7</span>
+                      <span className="text-brand-amber">,</span>
                     </div>
                     <div className="text-gray-400 pl-4">
-                      <span className="text-blue-300">challenges</span><span className="text-brand-amber">:</span> <span className="text-orange-300">∞</span>
+                      <span className="text-blue-300">challenges</span>
+                      <span className="text-brand-amber">:</span>{" "}
+                      <span className="text-orange-300">∞</span>
                     </div>
                     <div className="text-gray-400">
                       <span className="text-brand-amber">{"}"}</span>
@@ -82,7 +107,9 @@ export default function Index() {
                   <div className="pt-4 border-t border-gray-700 space-y-2">
                     <div className="flex items-center gap-3 text-sm">
                       <Braces className="w-4 h-4 text-brand-amber flex-shrink-0" />
-                      <span className="text-gray-300">Real-time Code Execution</span>
+                      <span className="text-gray-300">
+                        Real-time Code Execution
+                      </span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                       <Braces className="w-4 h-4 text-brand-red flex-shrink-0" />
@@ -122,9 +149,12 @@ export default function Index() {
                 Leaderboard
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                Compete with peers and track your ranking based on problems solved and skill level.
+                Compete with peers and track your ranking based on problems
+                solved and skill level.
               </p>
-              <p className="text-xs font-mono text-brand-blue dark:text-brand-amber">rank(user)</p>
+              <p className="text-xs font-mono text-brand-blue dark:text-brand-amber">
+                rank(user)
+              </p>
             </div>
 
             {/* Feature 2 - Problem Bank */}
@@ -136,9 +166,12 @@ export default function Index() {
                 Problem Bank
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                Access 500+ DSA problems with tags for arrays, trees, graphs, DP, and more.
+                Access 500+ DSA problems with tags for arrays, trees, graphs,
+                DP, and more.
               </p>
-              <p className="text-xs font-mono text-brand-amber dark:text-brand-amber">fetch(problems)</p>
+              <p className="text-xs font-mono text-brand-amber dark:text-brand-amber">
+                fetch(problems)
+              </p>
             </div>
 
             {/* Feature 3 - Code Sandbox */}
@@ -150,9 +183,12 @@ export default function Index() {
                 Code Sandbox
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                Write and test your code instantly with integrated IDE and real-time output.
+                Write and test your code instantly with integrated IDE and
+                real-time output.
               </p>
-              <p className="text-xs font-mono text-brand-red dark:text-brand-red">execute(code)</p>
+              <p className="text-xs font-mono text-brand-red dark:text-brand-red">
+                execute(code)
+              </p>
             </div>
 
             {/* Feature 4 - Collaboration */}
@@ -164,9 +200,12 @@ export default function Index() {
                 Collaboration
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                View peer profiles, skills, projects, and connect with students and professors.
+                View peer profiles, skills, projects, and connect with students
+                and professors.
               </p>
-              <p className="text-xs font-mono text-emerald-600 dark:text-emerald-400">connect(peers)</p>
+              <p className="text-xs font-mono text-emerald-600 dark:text-emerald-400">
+                connect(peers)
+              </p>
             </div>
           </div>
         </div>
@@ -190,30 +229,54 @@ const categories = 7;`}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Stat 1 */}
             <div className="p-6 border-l-4 border-brand-red bg-white/5 dark:bg-white/5 rounded-lg backdrop-blur-sm hover:bg-white/10 dark:hover:bg-white/10 transition-colors">
-              <p className="text-4xl md:text-5xl font-bold text-brand-amber dark:text-brand-amber mb-2 font-mono">5000+</p>
-              <p className="text-gray-300 dark:text-gray-400 text-sm">Active Students</p>
-              <p className="text-xs text-gray-500 dark:text-gray-600 mt-2 font-mono">students.length</p>
+              <p className="text-4xl md:text-5xl font-bold text-brand-amber dark:text-brand-amber mb-2 font-mono">
+                5000+
+              </p>
+              <p className="text-gray-300 dark:text-gray-400 text-sm">
+                Active Students
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-600 mt-2 font-mono">
+                students.length
+              </p>
             </div>
 
             {/* Stat 2 */}
             <div className="p-6 border-l-4 border-brand-amber bg-white/5 dark:bg-white/5 rounded-lg backdrop-blur-sm hover:bg-white/10 dark:hover:bg-white/10 transition-colors">
-              <p className="text-4xl md:text-5xl font-bold text-brand-red dark:text-brand-red mb-2 font-mono">500+</p>
-              <p className="text-gray-300 dark:text-gray-400 text-sm">DSA Problems</p>
-              <p className="text-xs text-gray-500 dark:text-gray-600 mt-2 font-mono">problems.count()</p>
+              <p className="text-4xl md:text-5xl font-bold text-brand-red dark:text-brand-red mb-2 font-mono">
+                500+
+              </p>
+              <p className="text-gray-300 dark:text-gray-400 text-sm">
+                DSA Problems
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-600 mt-2 font-mono">
+                problems.count()
+              </p>
             </div>
 
             {/* Stat 3 */}
             <div className="p-6 border-l-4 border-emerald-400 dark:border-emerald-500 bg-white/5 dark:bg-white/5 rounded-lg backdrop-blur-sm hover:bg-white/10 dark:hover:bg-white/10 transition-colors">
-              <p className="text-4xl md:text-5xl font-bold text-emerald-400 dark:text-emerald-400 mb-2 font-mono">7</p>
-              <p className="text-gray-300 dark:text-gray-400 text-sm">Problem Categories</p>
-              <p className="text-xs text-gray-500 dark:text-gray-600 mt-2 font-mono">categories</p>
+              <p className="text-4xl md:text-5xl font-bold text-emerald-400 dark:text-emerald-400 mb-2 font-mono">
+                7
+              </p>
+              <p className="text-gray-300 dark:text-gray-400 text-sm">
+                Problem Categories
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-600 mt-2 font-mono">
+                categories
+              </p>
             </div>
 
             {/* Stat 4 */}
             <div className="p-6 border-l-4 border-blue-400 dark:border-blue-500 bg-white/5 dark:bg-white/5 rounded-lg backdrop-blur-sm hover:bg-white/10 dark:hover:bg-white/10 transition-colors">
-              <p className="text-4xl md:text-5xl font-bold text-blue-300 dark:text-blue-300 mb-2 font-mono">50+</p>
-              <p className="text-gray-300 dark:text-gray-400 text-sm">Universities</p>
-              <p className="text-xs text-gray-500 dark:text-gray-600 mt-2 font-mono">orgs.total()</p>
+              <p className="text-4xl md:text-5xl font-bold text-blue-300 dark:text-blue-300 mb-2 font-mono">
+                50+
+              </p>
+              <p className="text-gray-300 dark:text-gray-400 text-sm">
+                Universities
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-600 mt-2 font-mono">
+                orgs.total()
+              </p>
             </div>
           </div>
         </div>
@@ -222,15 +285,20 @@ const categories = 7;`}
       {/* CTA Section */}
       <section className="py-20 md:py-32 bg-gradient-to-br from-brand-dark dark:from-gray-900 to-blue-900 dark:to-gray-800 relative overflow-hidden transition-colors">
         {/* Code Accent Borders */}
-        <div className="absolute top-0 left-0 w-32 h-32 text-8xl font-mono text-brand-amber/20 dark:text-brand-amber/10 opacity-40">{"{"}</div>
-        <div className="absolute bottom-0 right-0 w-32 h-32 text-8xl font-mono text-brand-red/20 dark:text-brand-red/10 opacity-40">{"}"}</div>
+        <div className="absolute top-0 left-0 w-32 h-32 text-8xl font-mono text-brand-amber/20 dark:text-brand-amber/10 opacity-40">
+          {"{"}
+        </div>
+        <div className="absolute bottom-0 right-0 w-32 h-32 text-8xl font-mono text-brand-red/20 dark:text-brand-red/10 opacity-40">
+          {"}"}
+        </div>
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <h2 className="text-3xl md:text-4xl font-bold text-white dark:text-white mb-6">
             Ready to Start Your DSA Journey?
           </h2>
           <p className="text-gray-300 dark:text-gray-400 text-lg mb-8">
-            Join the community and begin solving problems today. Track your progress and climb the leaderboard.
+            Join the community and begin solving problems today. Track your
+            progress and climb the leaderboard.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

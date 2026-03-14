@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import Link from "next/link";
 import { Menu, X, Moon, Sun } from "lucide-react";
@@ -21,7 +21,9 @@ export default function Layout({ children }: LayoutProps) {
   useEffect(() => {
     // Only run once on mount
     const savedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
     const isDark = savedTheme === "dark" || (!savedTheme && prefersDark);
 
     setDarkMode(isDark);
@@ -30,12 +32,12 @@ export default function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user || null);
-        setLoading(false);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+      setLoading(false);
+    });
 
     // Also check on initial mount
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -121,10 +123,10 @@ const builder = new Algorithm();`}</div>
               Questions
             </Link>
             <Link
-              href="/professor-dashboard"
+              href="/trainer-analytics"
               className="text-brand-dark dark:text-gray-100 hover:text-brand-blue dark:hover:text-brand-amber transition-colors font-medium"
             >
-              Professor Portal
+              Trainer Analytics
             </Link>
             <Link
               href="/profile"
@@ -144,39 +146,63 @@ const builder = new Algorithm();`}</div>
                 <Moon className="w-5 h-5 text-brand-blue" />
               )}
             </button>
-            
+
             {/* User Greeting and Logout */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginLeft: '20px', paddingLeft: '20px', borderLeft: '1px solid #e0e0e0' }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "15px",
+                marginLeft: "20px",
+                paddingLeft: "20px",
+                borderLeft: "1px solid #e0e0e0",
+              }}
+            >
               {!loading && user ? (
                 <>
-                  <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                    Hi {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                    Hi{" "}
+                    {user.user_metadata?.full_name ||
+                      user.email?.split("@")[0] ||
+                      "User"}
                   </span>
                   <button
                     onClick={handleLogout}
                     style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#ff6b6b',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      transition: 'background-color 0.2s'
+                      padding: "8px 16px",
+                      backgroundColor: "#ff6b6b",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      transition: "background-color 0.2s",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ff5252')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ff6b6b')}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#ff5252")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#ff6b6b")
+                    }
                   >
                     Logout
                   </button>
                 </>
               ) : !loading ? (
-                <Link href="/auth/login" style={{ fontSize: '14px', fontWeight: '500', color: '#1f2022', textDecoration: 'none' }}>
+                <Link
+                  href="/auth/login"
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#1f2022",
+                    textDecoration: "none",
+                  }}
+                >
                   Sign In
                 </Link>
               ) : (
-                <span style={{ fontSize: '14px' }}>Loading...</span>
+                <span style={{ fontSize: "14px" }}>Loading...</span>
               )}
             </div>
           </div>
@@ -228,11 +254,11 @@ const builder = new Algorithm();`}</div>
                 Questions
               </Link>
               <Link
-                href="/professor-dashboard"
+                href="/trainer-analytics"
                 className="block text-brand-dark dark:text-gray-100 hover:text-brand-blue dark:hover:text-brand-amber transition-colors font-medium py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Professor Portal
+                Trainer Analytics
               </Link>
               <Link
                 href="/profile"
@@ -263,17 +289,26 @@ const builder = new Algorithm();`}</div>
               <h4 className="font-bold mb-4">Platform</h4>
               <ul className="space-y-2 text-gray-300 dark:text-gray-400">
                 <li>
-                  <Link href="/leaderboard" className="hover:text-white dark:hover:text-gray-100 transition">
+                  <Link
+                    href="/leaderboard"
+                    className="hover:text-white dark:hover:text-gray-100 transition"
+                  >
                     Leaderboard
                   </Link>
                 </li>
                 <li>
-                  <Link href="/questions" className="hover:text-white dark:hover:text-gray-100 transition">
+                  <Link
+                    href="/questions"
+                    className="hover:text-white dark:hover:text-gray-100 transition"
+                  >
                     Questions
                   </Link>
                 </li>
                 <li>
-                  <Link href="/profile" className="hover:text-white dark:hover:text-gray-100 transition">
+                  <Link
+                    href="/profile"
+                    className="hover:text-white dark:hover:text-gray-100 transition"
+                  >
                     Profile
                   </Link>
                 </li>
@@ -283,17 +318,26 @@ const builder = new Algorithm();`}</div>
               <h4 className="font-bold mb-4">Resources</h4>
               <ul className="space-y-2 text-gray-300 dark:text-gray-400">
                 <li>
-                  <a href="#" className="hover:text-white dark:hover:text-gray-100 transition">
+                  <a
+                    href="#"
+                    className="hover:text-white dark:hover:text-gray-100 transition"
+                  >
                     Documentation
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white dark:hover:text-gray-100 transition">
+                  <a
+                    href="#"
+                    className="hover:text-white dark:hover:text-gray-100 transition"
+                  >
                     Contact
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white dark:hover:text-gray-100 transition">
+                  <a
+                    href="#"
+                    className="hover:text-white dark:hover:text-gray-100 transition"
+                  >
                     About
                   </a>
                 </li>

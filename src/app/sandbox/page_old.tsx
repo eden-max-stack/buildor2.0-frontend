@@ -10,77 +10,18 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  Check,
-  XCircle,
-  AlertCircle,
 } from "lucide-react";
-import { useState, useEffect, useRef, type RefObject } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import * as d3 from "d3";
 
-// ============================================
-// TYPES & INTERFACES
-// ============================================
-
-interface TestCase {
-  id: string;
-  input: Record<string, any>;
-  expected_output: any;
-  is_sample: boolean;
-  is_hidden: boolean;
-  difficulty?: string;
-  order_index: number;
-}
-
 interface Question {
-  id: string;
+  id: number;
   title: string;
-  description: string;
   difficulty: "Easy" | "Medium" | "Hard";
   tags: string[];
-  constraints: string[];
-  acceptance_rate?: number;
-  total_submissions: number;
-  successful_submissions: number;
-  optimal_solution?: string;
-  time_complexity?: string;
-  space_complexity?: string;
-  test_cases: TestCase[];
-}
-
-interface TestCaseResult {
-  test_case_id: string;
-  passed: boolean;
-  input: Record<string, any>;
-  expected_output: any;
-  actual_output?: any;
-  error_message?: string;
-  is_sample: boolean;
-}
-
-interface SubmissionResult {
-  id: string;
-  question_id: string;
-  user_id: string;
-  status: "accepted" | "wrong_answer" | "runtime_error" | "time_limit_exceeded";
-  test_cases_passed: number;
-  total_test_cases: number;
-  runtime_ms?: number;
-  memory_kb?: number;
-  test_results: TestCaseResult[];
-  error_message?: string;
-  submitted_at: string;
-}
-
-interface HintData {
-  hint: string;
-  analysis?: {
-    bug_type: string;
-    confidence: number;
-    bug_line?: number;
-    patch_suggestion?: string;
-  };
-  hints_used: number;
+  acceptance: number;
+  solved: number;
 }
 
 interface FunctionAnalysis {
@@ -97,174 +38,154 @@ interface GraphData {
   error?: string;
 }
 
-// ============================================
-// MAIN COMPONENT
-// ============================================
+const allProblems: Question[] = [
+  {
+    id: 1,
+    title: "Two Sum",
+    difficulty: "Easy",
+    tags: ["Arrays", "Hash Table"],
+    acceptance: 47.3,
+    solved: 15234,
+  },
+  {
+    id: 2,
+    title: "Add Two Numbers",
+    difficulty: "Medium",
+    tags: ["Linked List", "Math"],
+    acceptance: 32.5,
+    solved: 8923,
+  },
+  {
+    id: 3,
+    title: "Longest Substring Without Repeating Characters",
+    difficulty: "Medium",
+    tags: ["Hash Table", "String", "Sliding Window"],
+    acceptance: 33.2,
+    solved: 9123,
+  },
+  {
+    id: 4,
+    title: "Median of Two Sorted Arrays",
+    difficulty: "Hard",
+    tags: ["Arrays", "Binary Search", "Divide and Conquer"],
+    acceptance: 27.4,
+    solved: 5234,
+  },
+  {
+    id: 5,
+    title: "Longest Palindromic Substring",
+    difficulty: "Medium",
+    tags: ["String", "Dynamic Programming"],
+    acceptance: 32.1,
+    solved: 7234,
+  },
+];
+
+const problemDescriptions: Record<
+  number,
+  { description: string; examples: string; constraints: string }
+> = {
+  1: {
+    description:
+      "Given an array of integers nums and an integer target, return the indices of the two numbers that add up to the target.",
+    examples: "Input: nums = [2,7,11,15], target = 9\nOutput: [0,1]",
+    constraints: "2 ≤ nums.length ≤ 10^4\n-10^9 ≤ nums[i] ≤ 10^9",
+  },
+};
+
+const mockHints = [
+  "Try using a two-pointer approach for this problem.",
+  "Consider using a hash map to store intermediate results.",
+  "Think about the edge cases: empty arrays, single element, and duplicates.",
+];
 
 export default function CodeSandbox() {
   const searchParams = useSearchParams();
-  const API_BASE = "http://localhost:8000";
-  const USER_ID = "10000000-0000-0000-0000-000000000001"; // TODO: Get from auth context
-
-  // Question state
+  const [timeLeft, setTimeLeft] = useState(300);
+  const [hintRequested, setHintRequested] = useState(false);
+  const [currentHintIndex, setCurrentHintIndex] = useState(0);
+  const [timerActive, setTimerActive] = useState(true);
   const [question, setQuestion] = useState<Question | null>(null);
-  const [isLoadingQuestion, setIsLoadingQuestion] = useState(true);
-
-  // Code editor state
-  const [code, setCode] = useState(`def solution(nums, target):
-    # Write your solution here
-    pass`);
-
-  // Submission state
-  const [submissionResult, setSubmissionResult] =
-    useState<SubmissionResult | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Hint state
-  const [hintData, setHintData] = useState<HintData | null>(null);
-  const [isLoadingHint, setIsLoadingHint] = useState(false);
-
-  // Visualization state
+  const [code, setCode] = useState(
+    `def example(x):\n    y = x + 1\n    if x > 0:\n        z = y * 2\n        print(z)\n    else:\n        z = y * 3\n        print(z)\n    result = z + y\n    return result`,
+  );
+  const [output, setOutput] = useState<string>("");
+  const [isRunning, setIsRunning] = useState(false);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [visualizationData, setVisualizationData] = useState<GraphData | null>(
     null,
   );
   const [showVisualization, setShowVisualization] = useState(false);
   const [activeTab, setActiveTab] = useState<"ast" | "cfg" | "dfg">("cfg");
-  const [selectedFunctionIndex, setSelectedFunctionIndex] = useState<number>(0);
+  const [selectedFunctionIndex, setSelectedFunctionIndex] = useState<number>(0); // For multi-function support
   const [showFunctionSelector, setShowFunctionSelector] = useState(false);
 
-  const astSvgRef = useRef<SVGSVGElement | null>(null);
-  const cfgSvgRef = useRef<SVGSVGElement | null>(null);
-  const dfgSvgRef = useRef<SVGSVGElement | null>(null);
-
-  // ============================================
-  // FETCH QUESTION DETAILS
-  // ============================================
+  const astSvgRef = useRef<SVGSVGElement>(null);
+  const cfgSvgRef = useRef<SVGSVGElement>(null);
+  const dfgSvgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    const questionId = searchParams?.get("id");
-    if (questionId) {
-      fetchQuestionDetails(questionId);
+    const questionId = parseInt(searchParams?.get("id") || "0");
+    if (questionId > 0) {
+      const foundProblem = allProblems.find((p) => p.id === questionId);
+      if (foundProblem) setQuestion(foundProblem);
     }
   }, [searchParams]);
 
-  const fetchQuestionDetails = async (questionId: string) => {
-    setIsLoadingQuestion(true);
-    try {
-      const response = await fetch(`${API_BASE}/questions/${questionId}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch question: ${response.status}`);
-      }
-      const data: Question = await response.json();
-      setQuestion(data);
+  useEffect(() => {
+    if (!timerActive || timeLeft <= 0) return;
 
-      // Set initial code template if available
-      if (data.test_cases.length > 0) {
-        const firstTestCase = data.test_cases[0];
-        const params = Object.keys(firstTestCase.input).join(", ");
-        setCode(`def solution(${params}):
-    # Write your solution here
-    pass`);
-      }
-    } catch (error) {
-      console.error("Error fetching question:", error);
-      alert("Failed to load question. Please try again.");
-    } finally {
-      setIsLoadingQuestion(false);
-    }
-  };
-
-  // ============================================
-  // SUBMIT CODE
-  // ============================================
-
-  const handleSubmitCode = async () => {
-    if (!question) return;
-
-    setIsSubmitting(true);
-    setSubmissionResult(null);
-
-    try {
-      const response = await fetch(`${API_BASE}/submissions/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question_id: question.id,
-          user_id: USER_ID,
-          code: code,
-          language: "python",
-        }),
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          setTimerActive(false);
+          return 0;
+        }
+        return prev - 1;
       });
+    }, 1000);
 
-      if (!response.ok) {
-        throw new Error(`Submission failed: ${response.status}`);
-      }
+    return () => clearInterval(timer);
+  }, [timerActive, timeLeft]);
 
-      const result: SubmissionResult = await response.json();
-      setSubmissionResult(result);
-    } catch (error) {
-      console.error("Error submitting code:", error);
-      alert("Failed to submit code. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // ============================================
-  // GET HINT
-  // ============================================
-
-  const handleGetHint = async () => {
-    if (!question) return;
-
-    setIsLoadingHint(true);
-
-    try {
-      const response = await fetch(`${API_BASE}/analysis/hint`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question_id: question.id,
-          user_id: USER_ID,
-          user_code: code,
-          skill_level: "medium",
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Hint request failed: ${response.status}`);
-      }
-
-      const hint: HintData = await response.json();
-      setHintData(hint);
-    } catch (error) {
-      console.error("Error getting hint:", error);
-      alert("Failed to get hint. Please try again.");
-    } finally {
-      setIsLoadingHint(false);
-    }
+  const handleGetHint = () => {
+    setHintRequested(true);
+    setCurrentHintIndex((prev) => (prev + 1) % mockHints.length);
   };
 
-  // ============================================
-  // VISUALIZE CODE
-  // ============================================
+  const handleRunCode = async () => {
+    setIsRunning(true);
+    setOutput("Running code...");
+
+    setTimeout(() => {
+      setOutput(
+        "Test Case 1: Passed ✓\nTest Case 2: Passed ✓\nTest Case 3: Failed ✗\n\nExpected: [0, 1]\nReceived: [1, 0]",
+      );
+      setIsRunning(false);
+    }, 1500);
+  };
 
   const handleVisualize = async () => {
     setIsVisualizing(true);
+    setOutput("Generating visualization...");
 
     try {
-      const response = await fetch(`${API_BASE}/api/v1/graph/analyze`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "http://localhost:8000/api/v1/graph/analyze",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ source_code: code }),
         },
-        body: JSON.stringify({ source_code: code }),
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -273,26 +194,27 @@ export default function CodeSandbox() {
       const data = await response.json();
       setVisualizationData(data);
       setShowVisualization(true);
-      setSelectedFunctionIndex(0);
+      setSelectedFunctionIndex(0); // Reset to first function
+      setOutput(
+        `✓ Visualization generated successfully! Found ${data.functions?.length || 0} function(s).`,
+      );
     } catch (error) {
-      console.error("Error generating visualization:", error);
-      alert("Failed to generate visualization. Please check your code syntax.");
+      setOutput(
+        `Error generating visualization: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     } finally {
       setIsVisualizing(false);
     }
   };
 
-  // ============================================
-  // VISUALIZATION HELPERS
-  // ============================================
-
+  // Get currently selected function's data
   const getCurrentFunction = () => {
     if (!visualizationData?.functions?.length) return null;
     return visualizationData.functions[selectedFunctionIndex];
   };
 
   // D3.js visualization functions
-  const renderAST = (astData: any, svgRef: RefObject<SVGSVGElement | null>) => {
+  const renderAST = (astData: any, svgRef: React.RefObject<SVGSVGElement>) => {
     if (!svgRef.current || !astData) return;
 
     const svg = d3.select(svgRef.current);
@@ -308,17 +230,17 @@ export default function CodeSandbox() {
 
     // Create tree layout with proper spacing
     const treeLayout = d3
-      .tree<any>()
+      .tree()
       .size([width - 100, height - 100])
       .separation((a, b) => (a.parent === b.parent ? 2 : 3));
 
     // Convert AST to d3 hierarchy
-    const root = d3.hierarchy(astData.root, (d: any) => d.children);
+    const root = d3.hierarchy(astData.root, (d) => d.children);
     const treeData = treeLayout(root);
 
     // Add zoom behavior
     const zoom = d3
-      .zoom<SVGSVGElement, unknown>()
+      .zoom()
       .scaleExtent([0.1, 3])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
@@ -334,7 +256,7 @@ export default function CodeSandbox() {
       .attr(
         "d",
         d3
-          .linkVertical<any, any>()
+          .linkVertical()
           .x((d: any) => d.x)
           .y((d: any) => d.y) as any,
       )
@@ -380,7 +302,7 @@ export default function CodeSandbox() {
       .text((d: any) => d.data.type);
 
     // Center the tree with better calculation
-    const bounds = (g.node() as SVGGElement | null)?.getBBox();
+    const bounds = g.node()?.getBBox();
     if (bounds && bounds.width > 0 && bounds.height > 0) {
       const fullWidth = width;
       const fullHeight = height;
@@ -411,7 +333,7 @@ export default function CodeSandbox() {
     }
   };
 
-  const renderCFG = (cfgData: any, svgRef: RefObject<SVGSVGElement | null>) => {
+  const renderCFG = (cfgData: any, svgRef: React.RefObject<SVGSVGElement>) => {
     if (!svgRef.current || !cfgData) return;
 
     const svg = d3.select(svgRef.current);
@@ -438,7 +360,7 @@ export default function CodeSandbox() {
 
     // Add zoom
     const zoom = d3
-      .zoom<SVGSVGElement, unknown>()
+      .zoom()
       .scaleExtent([0.1, 3])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
@@ -480,7 +402,7 @@ export default function CodeSandbox() {
       .attr("class", "node")
       .call(
         d3
-          .drag<SVGGElement, any>()
+          .drag()
           .on("start", (event, d: any) => {
             if (!event.active) simulation.alphaTarget(0.3).restart();
             d.fx = d.x;
@@ -533,7 +455,7 @@ export default function CodeSandbox() {
     });
   };
 
-  const renderDFG = (dfgData: any, svgRef: RefObject<SVGSVGElement | null>) => {
+  const renderDFG = (dfgData: any, svgRef: React.RefObject<SVGSVGElement>) => {
     if (!svgRef.current || !dfgData || dfgData.nodes.length === 0) return;
 
     const svg = d3.select(svgRef.current);
@@ -560,7 +482,7 @@ export default function CodeSandbox() {
 
     // Add zoom
     const zoom = d3
-      .zoom<SVGSVGElement, unknown>()
+      .zoom()
       .scaleExtent([0.1, 3])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
@@ -600,7 +522,7 @@ export default function CodeSandbox() {
       .attr("class", "node")
       .call(
         d3
-          .drag<SVGGElement, any>()
+          .drag()
           .on("start", (event, d: any) => {
             if (!event.active) simulation.alphaTarget(0.3).restart();
             d.fx = d.x;
@@ -648,209 +570,60 @@ export default function CodeSandbox() {
 
   // Render visualizations when data changes
   useEffect(() => {
-    if (!visualizationData || !showVisualization) return;
-    const currentFunction = getCurrentFunction();
-
-    if (activeTab === "ast" && visualizationData.ast) {
-      renderAST(visualizationData.ast, astSvgRef);
-    } else if (activeTab === "cfg" && currentFunction?.cfg) {
-      renderCFG(currentFunction.cfg, cfgSvgRef);
-    } else if (activeTab === "dfg" && currentFunction?.dfg) {
-      renderDFG(currentFunction.dfg, dfgSvgRef);
+    if (visualizationData && showVisualization) {
+      if (activeTab === "ast") {
+        renderAST(visualizationData.ast, astSvgRef);
+      } else if (activeTab === "cfg") {
+        const currentFunction = getCurrentFunction();
+        if (currentFunction) {
+          renderCFG(currentFunction.cfg, cfgSvgRef);
+        }
+      } else if (activeTab === "dfg") {
+        const currentFunction = getCurrentFunction();
+        if (currentFunction) {
+          renderDFG(currentFunction.dfg, dfgSvgRef);
+        }
+      }
     }
   }, [visualizationData, activeTab, showVisualization, selectedFunctionIndex]);
-
-  // ============================================
-  // UTILITY FUNCTIONS
-  // ============================================
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy":
-        return "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400";
-      case "Medium":
-        return "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400";
-      case "Hard":
-        return "text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400";
-      default:
-        return "text-gray-600 bg-gray-100";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "accepted":
-        return "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400";
-      case "wrong_answer":
-        return "text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400";
-      case "runtime_error":
-        return "text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400";
-      default:
-        return "text-gray-600 bg-gray-100";
-    }
-  };
-
-  // ============================================
-  // RENDER
-  // ============================================
-
-  if (isLoadingQuestion) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">
-              Loading question...
-            </p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!question) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">
-              Question not found
-            </p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
 
   const currentFunction = getCurrentFunction();
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-brand-dark dark:text-white mb-2">
-              {question.title}
-            </h1>
-            <div className="flex items-center gap-3">
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-semibold ${getDifficultyColor(question.difficulty)}`}
-              >
-                {question.difficulty}
-              </span>
-              {question.acceptance_rate && (
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Acceptance: {question.acceptance_rate.toFixed(1)}%
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+          {/* Left Panel - Problem Statement */}
+          <div className="lg:col-span-1 bg-white border border-gray-200 dark:bg-blue-700/10 dark:border-blue-500/20 rounded-lg p-6">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-brand-dark mb-2 dark:text-gray-100">
+                {question?.title || "Code Visualization"}
+              </h2>
+              {question && (
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-sm font-semibold border-2 ${
+                    question.difficulty === "Easy"
+                      ? "bg-emerald-100 text-emerald-700 border-emerald-300"
+                      : question.difficulty === "Medium"
+                        ? "bg-brand-amber text-brand-dark border-brand-amber"
+                        : "bg-brand-red text-white border-brand-red"
+                  }`}
+                >
+                  {question.difficulty}
                 </span>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Panel - Problem Description */}
-          <div className="lg:col-span-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-6">
-            {/* Tags */}
-            <div>
-              <h3 className="font-semibold text-brand-dark dark:text-gray-200 mb-2">
-                Tags:
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {question.tags.map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm"
-                  >
-                    {tag}
-                  </span>
-                ))}
+            <div className="space-y-4 text-sm text-gray-700">
+              <div>
+                <h3 className="font-semibold text-brand-dark mb-2 dark:text-gray-200">
+                  Description:
+                </h3>
+                <p className="dark:text-gray-400">
+                  Write your Python code in the editor and click "Visualize" to
+                  see the AST, CFG, and DFG representations.
+                </p>
               </div>
             </div>
-
-            {/* Description */}
-            <div>
-              <h3 className="font-semibold text-brand-dark dark:text-gray-200 mb-2">
-                Description:
-              </h3>
-              <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">
-                {question.description}
-              </p>
-            </div>
-
-            {/* Constraints */}
-            {question.constraints.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-brand-dark dark:text-gray-200 mb-2">
-                  Constraints:
-                </h3>
-                <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                  {question.constraints.map((constraint, idx) => (
-                    <li key={idx}>{constraint}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Sample Test Cases */}
-            {question.test_cases.filter((tc) => tc.is_sample).length > 0 && (
-              <div>
-                <h3 className="font-semibold text-brand-dark dark:text-gray-200 mb-2">
-                  Examples:
-                </h3>
-                <div className="space-y-3">
-                  {question.test_cases
-                    .filter((tc) => tc.is_sample)
-                    .map((tc, idx) => (
-                      <div
-                        key={tc.id}
-                        className="bg-gray-50 dark:bg-gray-900 rounded p-3 text-sm"
-                      >
-                        <div className="font-mono">
-                          <div className="text-gray-600 dark:text-gray-400">
-                            Input:
-                          </div>
-                          <div className="text-gray-900 dark:text-gray-100 ml-2">
-                            {JSON.stringify(tc.input, null, 2)}
-                          </div>
-                          <div className="text-gray-600 dark:text-gray-400 mt-2">
-                            Output:
-                          </div>
-                          <div className="text-gray-900 dark:text-gray-100 ml-2">
-                            {JSON.stringify(tc.expected_output)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Complexity */}
-            {(question.time_complexity || question.space_complexity) && (
-              <div>
-                <h3 className="font-semibold text-brand-dark dark:text-gray-200 mb-2">
-                  Complexity:
-                </h3>
-                <div className="text-sm space-y-1">
-                  {question.time_complexity && (
-                    <div className="text-gray-700 dark:text-gray-300">
-                      <span className="font-medium">Time:</span>{" "}
-                      {question.time_complexity}
-                    </div>
-                  )}
-                  {question.space_complexity && (
-                    <div className="text-gray-700 dark:text-gray-300">
-                      <span className="font-medium">Space:</span>{" "}
-                      {question.space_complexity}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Right Panel - Editor and Output */}
@@ -863,16 +636,16 @@ export default function CodeSandbox() {
                 </span>
                 <div className="flex justify-end gap-2">
                   <button
-                    onClick={handleSubmitCode}
-                    disabled={isSubmitting}
+                    onClick={handleRunCode}
+                    disabled={isRunning}
                     className={`flex items-center gap-1 px-3 py-1 text-sm rounded font-semibold transition-all ${
-                      isSubmitting
+                      isRunning
                         ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                         : "bg-green-600 text-white hover:bg-green-700"
                     }`}
                   >
                     <Play className="w-3 h-3" />
-                    {isSubmitting ? "Submitting..." : "Submit"}
+                    {isRunning ? "Running..." : "Run"}
                   </button>
 
                   <button
@@ -892,225 +665,29 @@ export default function CodeSandbox() {
               <textarea
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                className="w-full h-96 bg-gray-900 text-white p-6 font-mono text-sm focus:outline-none resize-none"
+                className="w-full h-64 bg-gray-900 text-white p-6 font-mono text-sm focus:outline-none resize-none"
                 spellCheck={false}
-                placeholder="Write your solution here..."
               />
             </div>
 
-            {/* Submission Results */}
-            {submissionResult && (
-              <div
-                className={`border-2 rounded-lg p-6 ${
-                  submissionResult.status === "accepted"
-                    ? "bg-green-50 dark:bg-green-900/20 border-green-500"
-                    : "bg-red-50 dark:bg-red-900/20 border-red-500"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    {submissionResult.status === "accepted" ? (
-                      <Check className="w-6 h-6 text-green-600" />
-                    ) : (
-                      <XCircle className="w-6 h-6 text-red-600" />
-                    )}
-                    <div>
-                      <h3 className="font-bold text-lg">
-                        <span
-                          className={`${getStatusColor(submissionResult.status)}`}
-                        >
-                          {submissionResult.status
-                            .replace("_", " ")
-                            .toUpperCase()}
-                        </span>
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {submissionResult.test_cases_passed} /{" "}
-                        {submissionResult.total_test_cases} test cases passed
-                      </p>
-                    </div>
-                  </div>
-                  {submissionResult.runtime_ms !== undefined && (
-                    <div className="text-right text-sm">
-                      <div className="text-gray-700 dark:text-gray-300">
-                        Runtime:{" "}
-                        <span className="font-semibold">
-                          {submissionResult.runtime_ms}ms
-                        </span>
-                      </div>
-                      <div className="text-gray-700 dark:text-gray-300">
-                        Memory:{" "}
-                        <span className="font-semibold">
-                          {(submissionResult.memory_kb! / 1024).toFixed(2)}MB
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Error Message */}
-                {submissionResult.error_message && (
-                  <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 rounded border border-red-300 dark:border-red-700">
-                    <p className="text-sm font-mono text-red-800 dark:text-red-300">
-                      {submissionResult.error_message}
-                    </p>
-                  </div>
-                )}
-
-                {/* Test Results */}
-                <div className="space-y-2">
-                  {submissionResult.test_results
-                    .filter((tr) => tr.is_sample)
-                    .map((result, idx) => (
-                      <div
-                        key={result.test_case_id}
-                        className={`p-3 rounded border ${
-                          result.passed
-                            ? "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700"
-                            : "bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-semibold text-sm">
-                            Test Case {idx + 1}
-                          </span>
-                          {result.passed ? (
-                            <Check className="w-4 h-4 text-green-600" />
-                          ) : (
-                            <XCircle className="w-4 h-4 text-red-600" />
-                          )}
-                        </div>
-                        <div className="text-xs font-mono space-y-1">
-                          <div>
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Input:
-                            </span>{" "}
-                            <span className="text-gray-900 dark:text-gray-100">
-                              {JSON.stringify(result.input)}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Expected:
-                            </span>{" "}
-                            <span className="text-gray-900 dark:text-gray-100">
-                              {JSON.stringify(result.expected_output)}
-                            </span>
-                          </div>
-                          {result.actual_output !== undefined && (
-                            <div>
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Got:
-                              </span>{" "}
-                              <span
-                                className={
-                                  result.passed
-                                    ? "text-green-700 dark:text-green-300"
-                                    : "text-red-700 dark:text-red-300"
-                                }
-                              >
-                                {JSON.stringify(result.actual_output)}
-                              </span>
-                            </div>
-                          )}
-                          {result.error_message && (
-                            <div className="text-red-700 dark:text-red-300">
-                              Error: {result.error_message}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                </div>
+            {/* Output Section */}
+            <div className="bg-gray-50 border border-gray-300 dark:bg-gray-800/50 dark:border-blue-600/10 rounded-lg overflow-hidden">
+              <div className="bg-gray-200 dark:bg-gray-700/50 px-4 py-2 border-b border-gray-300 dark:border-gray-600">
+                <h3 className="font-bold text-brand-dark dark:text-gray-200 text-sm">
+                  Output
+                </h3>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Hint Section */}
-        <div className="bg-gradient-to-r from-brand-amber/10 to-brand-red/10 border-2 border-brand-amber/30 rounded-lg p-6">
-          <div className="flex items-start gap-4">
-            <Lightbulb className="w-6 h-6 text-brand-amber flex-shrink-0 mt-1" />
-            <div className="flex-1">
-              <h3 className="font-bold text-brand-dark mb-3 text-lg dark:text-gray-200">
-                Need a Hint?
-                {hintData && (
-                  <span className="ml-3 text-sm font-normal text-gray-600 dark:text-gray-400">
-                    ({hintData.hints_used} hints used)
-                  </span>
+              <div className="p-6">
+                {output ? (
+                  <pre className="text-gray-700 dark:text-gray-300 text-sm font-mono whitespace-pre-wrap">
+                    {output}
+                  </pre>
+                ) : (
+                  <p className="text-gray-500 text-sm dark:text-gray-400">
+                    Run your code to see output here
+                  </p>
                 )}
-              </h3>
-
-              {hintData ? (
-                <div className="space-y-3">
-                  <div className="flex flex-col md:flex-row md:items-start gap-3">
-                    <div className="flex-1 bg-white rounded-lg p-4 border-l-4 border-brand-amber dark:bg-gray-800">
-                      <p className="text-gray-700 dark:text-gray-300">
-                        {hintData.hint}
-                      </p>
-                    </div>
-
-                    {hintData.analysis && (
-                      <div className="md:w-56 bg-white/60 dark:bg-gray-900/40 border border-brand-amber/30 rounded-lg p-3">
-                        <div className="grid grid-cols-1 gap-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs uppercase tracking-wide text-gray-600 dark:text-gray-400">
-                              Bug Type
-                            </span>
-                            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200">
-                              {hintData.analysis.bug_type}
-                            </span>
-                          </div>
-
-                          {hintData.analysis.bug_line !== undefined &&
-                            hintData.analysis.bug_line !== null && (
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs uppercase tracking-wide text-gray-600 dark:text-gray-400">
-                                  Line
-                                </span>
-                                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
-                                  {hintData.analysis.bug_line}
-                                </span>
-                              </div>
-                            )}
-
-                          {typeof hintData.analysis.confidence === "number" && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs uppercase tracking-wide text-gray-600 dark:text-gray-400">
-                                Confidence
-                              </span>
-                              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-                                {(hintData.analysis.confidence * 100).toFixed(
-                                  1,
-                                )}
-                                %
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Click below to get an AI-powered hint for solving this
-                  problem.
-                </p>
-              )}
-
-              <button
-                onClick={handleGetHint}
-                disabled={isLoadingHint}
-                className={`flex items-center gap-2 px-6 py-2 rounded-lg font-semibold transition-all ${
-                  isLoadingHint
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60"
-                    : "bg-brand-amber text-brand-dark hover:bg-amber-500 active:scale-95"
-                }`}
-              >
-                <Lightbulb className="w-4 h-4" />
-                {isLoadingHint ? "Generating Hint..." : "Get Hint"}
-              </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1393,6 +970,56 @@ export default function CodeSandbox() {
             </div>
           </div>
         )}
+
+        {/* Hint Section */}
+        <div className="bg-gradient-to-r from-brand-amber/10 to-brand-red/10 border-2 border-brand-amber/30 rounded-lg p-6">
+          <div className="flex items-start gap-4">
+            <Lightbulb className="w-6 h-6 text-brand-amber flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="font-bold text-brand-dark mb-3 text-lg dark:text-gray-200">
+                Need a Hint?
+              </h3>
+
+              {hintRequested ? (
+                <div className="bg-white rounded-lg p-4 mb-4 border-l-4 border-brand-amber dark:bg-gray-800">
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {mockHints[currentHintIndex]}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Click below to reveal hints for solving this problem.
+                </p>
+              )}
+
+              <button
+                onClick={handleGetHint}
+                disabled={timeLeft > 0}
+                className={`flex items-center gap-2 px-6 py-2 rounded-lg font-semibold transition-all ${
+                  timeLeft > 0
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60"
+                    : "bg-brand-amber text-brand-dark hover:bg-amber-500 active:scale-95"
+                }`}
+              >
+                <Lightbulb className="w-4 h-4" />
+                {timeLeft > 0
+                  ? "Hint Available in " + formatTime(timeLeft)
+                  : "Get Hint"}
+              </button>
+
+              {hintRequested && (
+                <button
+                  onClick={() =>
+                    setCurrentHintIndex((prev) => (prev + 1) % mockHints.length)
+                  }
+                  className="ml-3 px-4 py-2 border-2 border-brand-amber text-brand-amber rounded-lg font-semibold hover:bg-brand-amber/5 transition-colors"
+                >
+                  Next Hint
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </Layout>
   );

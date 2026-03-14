@@ -1,362 +1,272 @@
-"use client"
+import {
+  LeftProfileCard,
+  SolvedQuestion,
+  ProfessorFeedback,
+  AcademicInfo,
+  PortfolioProject,
+  CurrentProject,
+  Achievement,
+  ExternalLink,
+  CodingStatistics,
+  ContributionGrid,
+  ProfileProps,
+  ContributionLevel,
+} from "./models";
 
-import { useState } from "react";
-import Layout from "@/components/Layout";
-import { Search, ChevronRight, Github, Award, Code2, Users } from "lucide-react";
+// --- LEFT PROFILE CARD ---
 
-interface Student {
-  id: number;
-  name: string;
-  rank: number;
-  problemsSolved: number;
-  skillLevel: string;
-  university: string;
-  department: string;
-  year: string;
-  github: string;
-  projects: number;
-  connections: number;
-}
+export const mockLeftProfileCard: LeftProfileCard = {
+  fullName: "Alex Chen",
+  username: "alex_dev",
+  profileDesc:
+    "Full-stack enthusiast building scalable apps. Loves React, Node.js, and coffee. ☕️",
+  graduationYear: 2026,
+  location: "San Francisco, CA",
+  website: "https://alexchen.dev",
+  skills: ["React", "TypeScript", "Node.js", "Python", "Tailwind"],
+};
 
-const mockStudents: Student[] = [
+// --- SOLVED QUESTIONS ---
+
+export const mockSolvedQuestions: SolvedQuestion[] = [
   {
     id: 1,
-    name: "Alice Johnson",
-    rank: 1,
-    problemsSolved: 250,
-    skillLevel: "Expert",
-    university: "MIT",
-    department: "Computer Science",
-    year: "3rd Year",
-    github: "github.com/alice",
-    projects: 12,
-    connections: 45,
+    title: "Merge K Sorted Lists",
+    difficulty: "Hard",
+    topic: "Linked List",
+    lang: "Python",
+    date: "2 days ago",
+    hintsUsed: 0,
+    runtime: "124ms",
+    memory: "18.4MB",
+    rank: "Top 5%",
   },
   {
     id: 2,
-    name: "Bob Smith",
-    rank: 2,
-    problemsSolved: 235,
-    skillLevel: "Advanced",
-    university: "Stanford",
-    department: "Computer Science",
-    year: "4th Year",
-    github: "github.com/bob",
-    projects: 10,
-    connections: 38,
+    title: "Two Sum",
+    difficulty: "Easy",
+    topic: "Array",
+    lang: "JavaScript",
+    date: "5 days ago",
+    hintsUsed: 1,
+    runtime: "54ms",
+    memory: "42.1MB",
+    rank: "Top 15%",
   },
   {
     id: 3,
-    name: "Carol Williams",
-    rank: 3,
-    problemsSolved: 220,
-    skillLevel: "Advanced",
-    university: "CMU",
-    department: "Software Engineering",
-    year: "3rd Year",
-    github: "github.com/carol",
-    projects: 8,
-    connections: 32,
+    title: "Course Schedule II",
+    difficulty: "Medium",
+    topic: "Graph",
+    lang: "Java",
+    date: "1 week ago",
+    hintsUsed: 2,
+    runtime: "8ms",
+    memory: "45.2MB",
+    rank: "Top 32%",
   },
   {
     id: 4,
-    name: "David Brown",
-    rank: 4,
-    problemsSolved: 195,
-    skillLevel: "Intermediate",
-    university: "UC Berkeley",
-    department: "Computer Science",
-    year: "2nd Year",
-    github: "github.com/david",
-    projects: 6,
-    connections: 25,
+    title: "Longest Palindromic Substring",
+    difficulty: "Medium",
+    topic: "String",
+    lang: "C++",
+    date: "2 weeks ago",
+    hintsUsed: 0,
+    runtime: "12ms",
+    memory: "8.4MB",
+    rank: "Top 8%",
   },
   {
     id: 5,
-    name: "Emma Davis",
-    rank: 5,
-    problemsSolved: 185,
-    skillLevel: "Intermediate",
-    university: "Harvard",
-    department: "Computer Science",
-    year: "2nd Year",
-    github: "github.com/emma",
-    projects: 5,
-    connections: 20,
+    title: "Binary Tree Maximum Path Sum",
+    difficulty: "Hard",
+    topic: "Tree",
+    lang: "Python",
+    date: "3 weeks ago",
+    hintsUsed: 1,
+    runtime: "96ms",
+    memory: "21.2MB",
+    rank: "Top 12%",
+  },
+  {
+    id: 6,
+    title: "Valid Parentheses",
+    difficulty: "Easy",
+    topic: "Stack",
+    lang: "TypeScript",
+    date: "1 month ago",
+    hintsUsed: 0,
+    runtime: "48ms",
+    memory: "39.8MB",
+    rank: "Top 6%",
   },
 ];
 
-interface ProfileModalProps {
-  student: Student | null;
-  onClose: () => void;
-}
+// --- PROFESSOR FEEDBACK ---
 
-function ProfileModal({ student, onClose }: ProfileModalProps) {
-  if (!student) return null;
+export const mockProfessorFeedback: ProfessorFeedback[] = [
+  {
+    id: 1,
+    prof: "Dr. Emily Chen",
+    course: "Advanced Algorithms (CS301)",
+    date: "Dec 15, 2024",
+    comment:
+      "Alex demonstrated exceptional understanding of dynamic programming concepts. The final project on genetic algorithms was particularly impressive.",
+  },
+  {
+    id: 2,
+    prof: "Prof. Mark Davis",
+    course: "Web Systems (CS412)",
+    date: "Nov 20, 2024",
+    comment:
+      "Consistently writes clean, maintainable code. Needs to focus slightly more on documentation standards, but technical execution is flawless.",
+  },
+  {
+    id: 3,
+    prof: "Dr. Sarah Johnson",
+    course: "Database Systems (CS350)",
+    date: "Oct 10, 2024",
+    comment:
+      "Outstanding work on the database optimization project. Alex showed deep understanding of indexing strategies and query performance tuning.",
+  },
+];
 
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div
-        className="bg-card rounded-xl shadow-xl max-w-md w-full max-h-screen overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header with rank */}
-        <div className="bg-gradient-to-r from-brand-blue to-brand-blue/80 dark:from-brand-blue/70 dark:to-brand-blue/50 text-white p-6 relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-white/80 hover:text-white"
-          >
-            ✕
-          </button>
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-bold">{student.name}</h2>
-              <p className="text-blue-100">Rank #{student.rank}</p>
-            </div>
-            <div className="bg-white/20 rounded-full p-3">
-              <Award className="w-6 h-6" />
-            </div>
-          </div>
-        </div>
+// --- ACADEMIC INFO ---
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Skills and Level */}
-          <div>
-            <h3 className="font-bold text-brand-dark mb-3 flex items-center gap-2 dark:text-white">
-              <Code2 className="w-4 h-4 text-brand-blue" />
-              Skill Level
-            </h3>
-            <div className="flex items-center gap-3">
-              <div className="px-3 py-1 bg-brand-amber text-brand-dark dark:text-white dark:text-amber-200/70 dark:bg-amber-500/30 dark:border-amber-800 rounded-full text-sm font-semibold">
-                {student.skillLevel}
-              </div>
-              <p className="text-gray-600 dark:text-gray-300">{student.problemsSolved} problems solved</p>
-            </div>
-          </div>
+export const mockAcademicInfo: AcademicInfo = {
+  university: "Tech University",
+  degree: "B.S. Computer Science",
+  major: "Software Engineering",
+  gpa: "3.8/4.0",
+  expectedGraduation: "May 2026",
+};
 
-          {/* Academic Info */}
-          <div>
-            <h3 className="font-bold text-brand-dark mb-3 dark:text-white">Academic Information</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-300">University:</span>
-                <span className="font-semibold text-brand-dark dark:text-blue-300">{student.university}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-300">Department:</span>
-                <span className="font-semibold text-brand-dark dark:text-blue-300">{student.department}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-300">Year:</span>
-                <span className="font-semibold text-brand-dark dark:text-blue-300">{student.year}</span>
-              </div>
-            </div>
-          </div>
+// --- PORTFOLIO PROJECTS ---
 
-          {/* Projects and Connections */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4 text-center dark:bg-blue-900/20">
-              <p className="text-2xl font-bold text-brand-blue dark:text-brand-blue">{student.projects}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Projects</p>
-            </div>
-            <div className="bg-amber-50 rounded-lg p-4 text-center dark:bg-amber-900/20">
-              <p className="text-2xl font-bold text-brand-amber dark:text-brand-amber">{student.connections}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Connections</p>
-            </div>
-          </div>
+export const mockPortfolioProjects: PortfolioProject[] = [
+  {
+    id: 1,
+    title: "Resume Parser",
+    description: "NLP-powered resume parsing system using Python and spaCy",
+    tags: ["Python", "NLP", "Machine Learning"],
+    githubUrl: "https://github.com/alex_dev/resume-parser",
+    stars: 124,
+    language: "Python",
+  },
+  {
+    id: 2,
+    title: "Task Tracker Pro",
+    description: "Full-stack task management app with real-time collaboration",
+    tags: ["React", "Node.js", "MongoDB", "Socket.io"],
+    githubUrl: "https://github.com/alex_dev/task-tracker",
+    liveUrl: "https://tasktrackerpro.netlify.app",
+    stars: 89,
+    language: "TypeScript",
+  },
+  {
+    id: 3,
+    title: "Algorithm Visualizer",
+    description:
+      "Interactive visualizations for sorting and pathfinding algorithms",
+    tags: ["JavaScript", "D3.js", "Algorithms"],
+    githubUrl: "https://github.com/alex_dev/algo-viz",
+    liveUrl: "https://algo-viz-alex.vercel.app",
+    stars: 203,
+    language: "JavaScript",
+  },
+];
 
-          {/* GitHub */}
-          <div>
-              <h3 className="font-bold text-brand-dark mb-3 flex items-center gap-2 dark:text-white">
-              <Github className="w-4 h-4 text-brand-dark dark:text-white" />
-              GitHub
-            </h3>
-            <a
-              href={`https://${student.github}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-blue hover:underline text-sm dark:text-blue-300"
-            >
-              {student.github}
-            </a>
-          </div>
+// --- CURRENT PROJECT ---
 
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="w-full bg-brand-blue text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors dark:bg-brand-blue dark:text-white"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+export const mockCurrentProject: CurrentProject = {
+  title: "Resume Parser using NLP",
+  description:
+    "Building an intelligent resume parsing system with Python and spaCy",
+  techStack: ["Python", "spaCy", "FastAPI", "PostgreSQL"],
+  status: "in-progress",
+};
+
+// --- RECENT ACHIEVEMENT ---
+
+export const mockRecentAchievement: Achievement = {
+  id: 1,
+  title: "Reached Top 5% in LeetCode Weekly Contest",
+  description: "Solved 4/4 problems in Contest 375",
+  date: "2 weeks ago",
+  type: "contest",
+};
+
+// --- EXTERNAL LINKS ---
+
+export const mockExternalLinks: ExternalLink[] = [
+  {
+    id: 1,
+    platform: "GitHub",
+    url: "https://github.com/alex_dev",
+    username: "alex_dev",
+  },
+  {
+    id: 2,
+    platform: "LinkedIn",
+    url: "https://linkedin.com/in/alexchen",
+    username: "alexchen",
+  },
+  {
+    id: 3,
+    platform: "LeetCode",
+    url: "https://leetcode.com/alex_dev",
+    username: "alex_dev",
+  },
+];
+
+// --- CODING STATISTICS ---
+
+export const mockCodingStatistics: CodingStatistics = {
+  totalQuestionsSolved: 342,
+  easyCount: 156,
+  mediumCount: 142,
+  hardCount: 44,
+  totalContests: 23,
+  globalRanking: 8234,
+  streakDays: 47,
+  languagesUsed: ["Python", "JavaScript", "TypeScript", "Java", "C++"],
+};
+
+// --- CONTRIBUTION GRID ---
+
+// Helper function to generate random contribution data
+const generateContributionGrid = (): ContributionGrid => {
+  const data: ContributionLevel[] = Array.from(
+    { length: 30 * 7 },
+    () => Math.floor(Math.random() * 5) as ContributionLevel,
   );
-}
 
-export default function Leaderboard() {
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const filteredStudents = mockStudents.filter((student) =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const totalContributions = data.reduce<number>(
+    (sum, level) => sum + level,
+    0,
   );
 
-  return (
-    <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {/* Header */}
-        <div className="mb-12">
-          { /* add dark mode */ }
-          <h1 className="text-4xl font-bold text-brand-dark dark:text-white smb-4">
-            Student Leaderboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Compete with peers and climb the rankings by solving DSA problems.
-          </p>
-        </div>
+  return {
+    data,
+    totalContributions,
+  };
+};
 
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-100 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search students by name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all dark:bg-blue-800/10"
-            />
-          </div>
-        </div>
+export const mockContributionGrid: ContributionGrid =
+  generateContributionGrid();
 
-        {/* Leaderboard Table - Desktop */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b-2 border-brand-blue/20 bg-gray-50 dark:bg-blue-900/20">
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
-                  Rank
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
-                  Name
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
-                  Problems Solved
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
-                  Skill Level
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
-                  University
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-brand-dark dark:text-white">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredStudents.map((student) => (
-                <tr
-                  key={student.id}
-                  className="border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/10 transition-colors cursor-pointer"
-                  onClick={() => setSelectedStudent(student)}
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-brand-amber flex items-center justify-center text-white font-bold text-sm">
-                        {student.rank}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-brand-dark dark:text-gray-400">{student.name}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Code2 className="w-4 h-4 text-brand-amber" />
-                      <span className="text-gray-700 dark:text-gray-400">{student.problemsSolved}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        student.skillLevel === "Expert"
-                          ? "bg-red-100 text-brand-red dark:text-red-300 dark:bg-red-900/50"
-                          : student.skillLevel === "Advanced"
-                          ? "bg-brand-blue/10 text-brand-blue dark:text-blue-300 dark:bg-blue-900/50"
-                          : "bg-amber-100 text-brand-amber dark:text-amber-200/70 dark:bg-amber-500/30"
-                      }`}
-                    >
-                      {student.skillLevel}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-700 dark:text-gray-400">{student.university}</td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedStudent(student);
-                      }}
-                      className="text-brand-blue hover:text-blue-600 font-semibold flex items-center gap-1 dark:text-blue-400/100 dark:hover:text-blue-800"
-                    >
-                      View <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+// --- COMPLETE PROFILE DATA ---
 
-        {/* Leaderboard Cards - Mobile */}
-        <div className="md:hidden space-y-4">
-          {filteredStudents.map((student) => (
-            <div
-              key={student.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => setSelectedStudent(student)}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-blue to-brand-amber flex items-center justify-center text-white font-bold">
-                    {student.rank}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-brand-dark">{student.name}</h3>
-                    <p className="text-sm text-gray-600">{student.university}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3 text-sm">
-                <div className="bg-blue-50 rounded p-2 text-center">
-                  <p className="font-bold text-brand-blue">{student.problemsSolved}</p>
-                  <p className="text-xs text-gray-600">Problems</p>
-                </div>
-                <div className="bg-amber-50 rounded p-2 text-center">
-                  <p className="font-bold text-brand-amber">{student.skillLevel}</p>
-                  <p className="text-xs text-gray-600">Level</p>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedStudent(student);
-                  }}
-                  className="bg-brand-blue text-white rounded font-semibold hover:bg-blue-600 transition-colors"
-                >
-                  View
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Profile Modal */}
-      <div onClick={() => setSelectedStudent(null)}>
-        <ProfileModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />
-      </div>
-    </Layout>
-  );
-}
+export const mockProfileData: ProfileProps = {
+  leftProfileCard: mockLeftProfileCard,
+  contributionGrid: mockContributionGrid,
+  solvedQuestions: mockSolvedQuestions,
+  professorFeedback: mockProfessorFeedback,
+  academicInfo: mockAcademicInfo,
+  portfolioProjects: mockPortfolioProjects,
+  currentProject: mockCurrentProject,
+  recentAchievement: mockRecentAchievement,
+  externalLinks: mockExternalLinks,
+  statistics: mockCodingStatistics,
+};

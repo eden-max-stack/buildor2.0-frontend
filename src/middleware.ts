@@ -2,6 +2,21 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json(
+      {
+        error:
+          'Missing Supabase env vars. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY).',
+      },
+      { status: 500 }
+    )
+  }
+
   // 1. Create an initial response
   let response = NextResponse.next({
     request: {
@@ -11,8 +26,8 @@ export async function middleware(request: NextRequest) {
 
   // 2. Create the Supabase client
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         get(name: string) {
@@ -70,18 +85,19 @@ export async function middleware(request: NextRequest) {
 
   // 5. Protection Logic
   
+  // TEMPORARILY DISABLED - Auth protection removed
   // If NO user and trying to access a protected route -> Redirect to Login
-  if (!user && !isAuthRoute) {
-    const loginUrl = new URL('/auth/login', request.url)
-    // Optional: Add a redirect param to send them back where they came from
-    loginUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname)
-    return NextResponse.redirect(loginUrl)
-  }
+  // if (!user && !isAuthRoute) {
+  //   const loginUrl = new URL('/auth/login', request.url)
+  //   // Optional: Add a redirect param to send them back where they came from
+  //   loginUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname)
+  //   return NextResponse.redirect(loginUrl)
+  // }
 
   // If USER exists and trying to access Login/Register -> Redirect to Home
-  if (user && isAuthRoute) {
-     return NextResponse.redirect(new URL('/', request.url))
-  }
+  // if (user && isAuthRoute) {
+  //    return NextResponse.redirect(new URL('/', request.url))
+  // }
 
   return response
 }

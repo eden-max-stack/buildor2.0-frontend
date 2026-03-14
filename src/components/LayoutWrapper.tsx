@@ -5,17 +5,17 @@ import Sidebar from "./sidebar";
 import { ReactNode } from "react";
 
 interface LayoutWrapperProps {
-    children: ReactNode;
+  children: ReactNode;
 }
 
 const LayoutWrapper = ({ children }: LayoutWrapperProps) => {
   return (
     <div>
-        {/* <Navbar />
+      {/* <Navbar />
         <Sidebar /> */}
-        {children}
+      {children}
     </div>
-  )
-}
+  );
+};
 
 export default LayoutWrapper;

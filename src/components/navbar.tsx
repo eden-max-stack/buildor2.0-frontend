@@ -14,12 +14,12 @@ export default function Navbar() {
 
   useEffect(() => {
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user || null);
-        setLoading(false);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+      setLoading(false);
+    });
 
     // Also check on initial mount
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -49,26 +49,41 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white px-6 py-4 shadow-md">
-      
-      <div className="navbar-items" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+      <div
+        className="navbar-items"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <div className="buildor-icon" style={{ flex: 1 }}>
           <Link href="/">
-            <Image 
-              src="/buildor_logo_light.png" 
-              alt="Buildor Icon" 
-              width={100} 
-              height={200} 
+            <Image
+              src="/buildor_logo_light.png"
+              alt="Buildor Icon"
+              width={100}
+              height={200}
             />
-            </Link>
+          </Link>
         </div>
 
-        <div className="navbar-links" style={{ display: 'flex', gap: '20px', flex: 2, justifyContent: 'flex-end', alignItems: 'center', color: '#1f2022' }}>
+        <div
+          className="navbar-links"
+          style={{
+            display: "flex",
+            gap: "20px",
+            flex: 2,
+            justifyContent: "flex-end",
+            alignItems: "center",
+            color: "#1f2022",
+          }}
+        >
           <Link href="/leaderboard">Leaderboard</Link>
           <Link href="/coding-practice">Questions</Link>
           <Link href="/professor-portal">Professor Portal</Link>
         </div>
       </div>
-      
     </nav>
   );
 }
