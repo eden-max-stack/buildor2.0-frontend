@@ -8,7 +8,6 @@ import {
   BookOpen,
   Users,
   MessageSquare,
-  Award,
   ExternalLink,
   FileText,
   Quote,
@@ -16,8 +15,8 @@ import {
   Mail,
   CheckCircle2,
   ChevronRight,
-  Plus,
 } from "lucide-react";
+import Image from "next/image";
 
 // --- Mock Data ---
 const trainerData = {
@@ -109,7 +108,7 @@ const trainerData = {
 };
 
 export default function TrainerProfile() {
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [, setIsContactModalOpen] = useState(false);
 
   return (
     <Layout>
@@ -130,9 +129,11 @@ export default function TrainerProfile() {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
                 {/* Overlapping Avatar */}
                 <div className="-mt-16 md:-mt-20 shrink-0">
-                  <img
+                  <Image
                     src={trainerData.avatar}
                     alt={trainerData.name}
+                    width={160}
+                    height={160}
                     className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white dark:border-gray-800 object-cover bg-gray-100 shadow-lg"
                   />
                 </div>
@@ -365,7 +366,7 @@ export default function TrainerProfile() {
                         </div>
 
                         <p className="text-sm text-gray-700 dark:text-gray-300 italic mb-4 leading-relaxed">
-                          "{review.text}"
+                          `&quot;`{review.text}`&quot;`
                         </p>
 
                         <div className="flex items-center justify-between text-xs text-gray-500 font-medium border-t border-gray-200 dark:border-gray-700/50 pt-3">

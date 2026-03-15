@@ -9,19 +9,17 @@ import {
   Code2,
   CheckCircle2,
   Users,
-  MessageSquare,
   PlayCircle,
   FileText,
-  Send,
-  Trophy,
   ExternalLink,
   ChevronRight,
   Circle,
-  Target,
   Search,
   Filter,
   CheckSquare,
   Square,
+  Star,
+  MessageSquare,
 } from "lucide-react";
 
 // --- Mock Data ---
@@ -219,8 +217,10 @@ export default function ClassHub() {
     );
   };
 
-  const handleQuestionClick = (question: Question) => {
-    router.push(`/classes/${classInfo.id}/sandbox?id=${question.id}`);
+  //   const handleQuestionClick = (question: Question) => {
+  const handleQuestionClick = () => {
+    // router.push(`/classes/${classInfo.id}/sandbox?id=${question.id}`);
+    router.push(`/classes/${classInfo.id}/sandbox?id=14`); // default set to 14 question as it is the only one which has proper mock data
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -507,7 +507,7 @@ export default function ClassHub() {
                             <div
                               key={question.id}
                               className="hover:bg-gray-50 dark:hover:bg-gray-800/80 transition-colors cursor-pointer p-5 group"
-                              onClick={() => handleQuestionClick(question)}
+                              onClick={() => handleQuestionClick()}
                             >
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex-1">
@@ -582,8 +582,127 @@ export default function ClassHub() {
 
             {/* PEOPLE & FEEDBACK TAB */}
             {activeTab === "people" && (
-              <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {/* People content remains exactly the same */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* Left Column: Trainer & Feedback */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Trainer Card */}
+                  <div className="bg-white dark:bg-gray-800/30 rounded-xl p-6 md:p-8 border border-gray-200 dark:border-gray-700/50 shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand-blue to-blue-400 flex items-center justify-center text-white text-3xl font-bold shadow-md shrink-0">
+                      {classInfo.trainer.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .replace("P", "")}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <h3 className="text-2xl font-bold text-brand-dark dark:text-white">
+                        {classInfo.trainer.name}
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 font-medium">
+                        {classInfo.trainer.role}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 pt-2 line-clamp-2">
+                        I am here to help you master graph theory and ace your
+                        technical interviews. Feel free to reach out if you get
+                        stuck on any of the Hard difficulty problems!
+                      </p>
+                    </div>
+                    <button className="w-full sm:w-auto px-6 py-2.5 bg-brand-blue text-white rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 shadow-sm shrink-0">
+                      <MessageSquare className="w-4 h-4" /> Message
+                    </button>
+                  </div>
+
+                  {/* Feedback History */}
+                  <div className="bg-white dark:bg-gray-800/30 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50 shadow-sm">
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                      <Star className="w-5 h-5 text-brand-amber fill-brand-amber" />
+                      Recent Feedback
+                    </h3>
+
+                    <div className="space-y-4">
+                      {/* Mock Feedback Item 1 */}
+                      <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 relative">
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-l-xl"></div>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                          `&quot;`Great job on the Dijkstra assignment! Your use
+                          of the priority queue was perfectly optimized. For the
+                          next module, try to focus on edge cases where negative
+                          weights exist.`&quot;`
+                        </p>
+                        <div className="flex items-center gap-2 mt-3 text-xs text-gray-500">
+                          <span className="font-medium text-gray-900 dark:text-gray-200">
+                            {classInfo.trainer.name}
+                          </span>
+                          <span>•</span>
+                          <span>2 days ago</span>
+                        </div>
+                      </div>
+
+                      {/* Mock Feedback Item 2 */}
+                      <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 relative">
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-blue rounded-l-xl"></div>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                          `&quot;`Welcome to the class! Make sure to complete
+                          the prerequisite sandbox environment setup by Friday
+                          so you are ready for the first graded
+                          challenge.`&quot;`
+                        </p>
+                        <div className="flex items-center gap-2 mt-3 text-xs text-gray-500">
+                          <span className="font-medium text-gray-900 dark:text-gray-200">
+                            {classInfo.trainer.name}
+                          </span>
+                          <span>•</span>
+                          <span>1 week ago</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Classmates */}
+                <div className="bg-white dark:bg-gray-800/30 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50 shadow-sm h-fit">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                      <Users className="w-5 h-5 text-brand-blue" /> Classmates
+                    </h3>
+                    <span className="text-xs font-medium bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400">
+                      {classInfo.students} total
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {[
+                      "Alice Johnson",
+                      "Bob Smith",
+                      "Carol Williams",
+                      "David Brown",
+                      "Emma Davis",
+                      "Frank Lee",
+                    ].map((name, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors cursor-pointer group"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 group-hover:border-brand-blue transition-colors">
+                          {name.charAt(0)}
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-brand-blue transition-colors">
+                            {name}
+                          </span>
+                        </div>
+                        <div
+                          className="w-2 h-2 rounded-full bg-emerald-500"
+                          title="Online recently"
+                        ></div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button className="w-full mt-4 py-2 text-sm text-brand-blue font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                    View All Students
+                  </button>
+                </div>
               </div>
             )}
           </div>

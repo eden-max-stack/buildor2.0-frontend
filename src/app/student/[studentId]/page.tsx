@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Layout from "@/components/Layout";
 import {
-  User,
   MapPin,
   Link as LinkIcon,
   Github,
@@ -119,7 +119,7 @@ function getLangColor(lang: string) {
 }
 
 export default function PublicStudentProfile() {
-  const [activeTab, setActiveTab] = useState("Overview");
+  // const [activeTab, setActiveTab] = useState("Overview");
 
   // Activity colors mapped to brand colors (Emerald scale for commits)
   const activityColors = [
@@ -140,7 +140,7 @@ export default function PublicStudentProfile() {
               <div className="flex flex-col items-start bg-white dark:bg-gray-800/30 border border-gray-200 dark:border-gray-700/50 rounded-2xl p-6 shadow-sm">
                 {/* Avatar */}
                 <div className="w-full aspect-square rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 mb-6 bg-gray-100 dark:bg-gray-900 shadow-md relative">
-                  <img
+                  <Image
                     src={studentInfo.avatar}
                     alt={studentInfo.fullName}
                     className="w-full h-full object-cover"
@@ -224,14 +224,15 @@ export default function PublicStudentProfile() {
 
                     <article className="prose dark:prose-invert max-w-none">
                       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                        Hi there! 👋 I'm Alice
+                        Hi there! 👋 I`&apos;`m Alice
                       </h3>
                       <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
-                        I'm a passionate developer currently solving complex
-                        algorithmic challenges. I focus primarily on distributed
-                        systems and backend engineering. When I'm not studying
-                        for my CS degree, you can find me competing in
-                        hackathons or optimizing my Neovim config.
+                        I`&apos;`m a passionate developer currently solving
+                        complex algorithmic challenges. I focus primarily on
+                        distributed systems and backend engineering. When
+                        I`&apos;`m not studying for my CS degree, you can find
+                        me competing in hackathons or optimizing my Neovim
+                        config.
                       </p>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

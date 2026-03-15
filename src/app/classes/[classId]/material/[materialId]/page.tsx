@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import Layout from "@/components/Layout";
 import {
   ChevronLeft,
@@ -28,7 +29,7 @@ const materialData = {
   postedTime: "Oct 24, 2025 • 10:30 AM",
 
   // The type dictates the entire view layout: "Video" | "Article" | "Question"
-  type: "Video" as const,
+  type: "Video" as "Video" | "Article" | "Question",
 
   // Video Specific
   duration: "45:20",
@@ -145,9 +146,11 @@ export default function MaterialView() {
               <div className="lg:col-span-2 space-y-4">
                 <div className="w-full aspect-video bg-black rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden relative group cursor-pointer">
                   {/* Fake Video Thumbnail/Background */}
-                  <img
+                  <Image
                     src="https://images.unsplash.com/photo-1516259762381-22954d7d3ad2?auto=format&fit=crop&q=80&w=1200&h=675"
                     alt="Video thumbnail"
+                    height={675}
+                    width={1200}
                     className="w-full h-full object-cover opacity-60 group-hover:opacity-50 transition-opacity"
                   />
 
@@ -220,8 +223,8 @@ export default function MaterialView() {
               <article className="prose dark:prose-invert prose-blue max-w-none">
                 {/* Note: In a real app, you would use a Markdown parser like 'react-markdown' here */}
                 <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-                  Dijkstra's algorithm allows us to find the shortest path
-                  between any two vertices of a graph.
+                  Dijkstra`&quot;`s algorithm allows us to find the shortest
+                  path between any two vertices of a graph.
                 </p>
                 <p className="text-gray-600 dark:text-gray-400 mb-8">
                   It differs from the minimum spanning tree because the shortest

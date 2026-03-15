@@ -14,8 +14,27 @@ import {
   Code2,
 } from "lucide-react";
 
+// --- TYPES ---
+interface ClassItem {
+  id: string;
+  org: string;
+  name: string;
+  progress: number;
+  color: string;
+  action: string;
+  estCompletion?: string; // Optional (only on active)
+  completedDate?: string; // Optional (only on completed)
+  grade?: string; // Optional (only on completed)
+  currentModule?: {
+    // Optional (only on active)
+    title: string;
+    type: string;
+    duration: string;
+  };
+}
+
 // --- Mock Data ---
-const activeClasses = [
+const activeClasses: ClassItem[] = [
   {
     id: "CS401",
     org: "Massachusetts Institute of Technology",
@@ -60,7 +79,7 @@ const activeClasses = [
   },
 ];
 
-const completedClasses = [
+const completedClasses: ClassItem[] = [
   {
     id: "CS201",
     org: "UC Berkeley",
@@ -107,7 +126,7 @@ export default function LearningDashboard() {
               {/* Today's Goals */}
               <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-xl p-6 shadow-sm">
                 <h2 className="font-bold text-gray-900 dark:text-white mb-4">
-                  Today's goals
+                  Today`&quot;`s goals
                 </h2>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3 group cursor-pointer">

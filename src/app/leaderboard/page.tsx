@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Layout from "@/components/Layout";
 import {
   Trophy,
   Search,
   Filter,
-  Medal,
-  Users,
-  ChevronDown,
   ArrowUpRight,
   ArrowDownRight,
   Minus,
@@ -186,9 +184,11 @@ export default function Leaderboard() {
               {topThree[0] && (
                 <div className="flex flex-col items-center w-28 sm:w-36 animate-in slide-in-from-bottom-8 duration-700 delay-100">
                   <div className="relative mb-3">
-                    <img
+                    <Image
                       src={topThree[0].avatar}
                       alt={topThree[0].name}
+                      height={80}
+                      width={80}
                       className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-gray-300 dark:border-gray-400 object-cover shadow-lg"
                     />
                     <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-gray-300 dark:bg-gray-400 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-800 text-white font-bold text-xs shadow-sm">
@@ -212,9 +212,11 @@ export default function Leaderboard() {
                 <div className="flex flex-col items-center w-32 sm:w-44 animate-in slide-in-from-bottom-12 duration-700 z-10">
                   <Trophy className="w-8 h-8 text-brand-amber mb-2 fill-brand-amber drop-shadow-md" />
                   <div className="relative mb-3">
-                    <img
+                    <Image
                       src={topThree[1].avatar}
                       alt={topThree[1].name}
+                      height={100}
+                      width={100}
                       className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-brand-amber object-cover shadow-xl"
                     />
                     <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-brand-amber rounded-full flex items-center justify-center border-2 border-white dark:border-gray-800 text-white font-bold text-xs shadow-sm">
@@ -237,9 +239,11 @@ export default function Leaderboard() {
               {topThree[2] && (
                 <div className="flex flex-col items-center w-28 sm:w-36 animate-in slide-in-from-bottom-4 duration-700 delay-200">
                   <div className="relative mb-3">
-                    <img
+                    <Image
                       src={topThree[2].avatar}
                       alt={topThree[2].name}
+                      height={80}
+                      width={80}
                       className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-orange-400 dark:border-orange-500 object-cover shadow-lg"
                     />
                     <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-orange-400 dark:bg-orange-500 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-800 text-white font-bold text-xs shadow-sm">
@@ -285,9 +289,11 @@ export default function Leaderboard() {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <img
+                          <Image
                             src={user.avatar}
                             alt={user.name}
+                            height={40}
+                            width={40}
                             className="w-10 h-10 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
                           />
                           <div>

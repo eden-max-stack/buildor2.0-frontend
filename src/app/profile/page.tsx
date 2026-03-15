@@ -16,7 +16,6 @@ import {
   Filter,
   Clock,
   Cpu,
-  Award,
   GraduationCap,
   MessageSquare,
   Briefcase,
@@ -45,11 +44,11 @@ export default function Profile({
   solvedQuestions = mockProfileData.solvedQuestions,
   professorFeedback = mockProfileData.professorFeedback,
   academicInfo = mockProfileData.academicInfo,
-  portfolioProjects = mockProfileData.portfolioProjects,
+  // portfolioProjects = mockProfileData.portfolioProjects,
   currentProject = mockProfileData.currentProject,
   recentAchievement = mockProfileData.recentAchievement,
   externalLinks = mockProfileData.externalLinks,
-  statistics = mockProfileData.statistics,
+  // statistics = mockProfileData.statistics,
 }: Partial<ProfileProps> = {}) {
   const [activeTab, setActiveTab] = useState<TabName>("Overview");
 
@@ -239,8 +238,9 @@ function OverviewTab({
               Hi there! 👋
             </h3>
             <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">
-              I'm a passionate developer currently solving complex algorithmic
-              challenges. I'm working on innovative projects to grow my skills.
+              I`&apos;`m a passionate developer currently solving complex
+              algorithmic challenges. I`&apos;`m working on innovative projects
+              to grow my skills.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
@@ -512,9 +512,9 @@ function PortfolioTab({
                 Hi there! 👋
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">
-                I'm a passionate developer currently solving complex algorithmic
-                challenges. I'm working on innovative projects to sharpen my
-                problem-solving skills.
+                I`&apos;`m a passionate developer currently solving complex
+                algorithmic challenges. I`&apos;`m working on innovative
+                projects to sharpen my problem-solving skills.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
@@ -578,7 +578,7 @@ function PortfolioTab({
                 </div>
                 <div className="pl-12">
                   <p className="text-gray-600 dark:text-gray-300 text-sm italic">
-                    "{fb.comment}"
+                    `&quot;`{fb.comment}`&quot;`
                   </p>
                 </div>
               </div>

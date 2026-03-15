@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -76,7 +77,7 @@ export default function Register() {
         router.push("/");
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError(`An unexpected error occurred. Please try again. ${err}`);
     } finally {
       setLoading(false);
     }
@@ -98,7 +99,7 @@ export default function Register() {
         setError(error.message);
       }
     } catch (err) {
-      setError("Failed to sign up with Google");
+      setError(`Failed to sign up with Google ${err}`);
     } finally {
       setLoading(false);
     }
@@ -120,7 +121,7 @@ export default function Register() {
         setError(error.message);
       }
     } catch (err) {
-      setError("Failed to sign up with GitHub");
+      setError(`Failed to sign up with GitHub ${err}`);
     } finally {
       setLoading(false);
     }
@@ -152,7 +153,7 @@ export default function Register() {
           {step === 1 && (
             <>
               <div className="flex flex-col items-center mb-6">
-                <img
+                <Image
                   src={
                     darkMode
                       ? "/buildor_logo_dark.svg"
@@ -387,7 +388,7 @@ export default function Register() {
                   Setup Profile
                 </h1>
                 <p className="text-gray-500 dark:text-slate-400 mt-2">
-                  Let's personalize your profile.
+                  Let`&apos;`s personalize your profile.
                 </p>
               </div>
 

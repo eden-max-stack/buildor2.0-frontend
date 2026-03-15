@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import Layout from "@/components/Layout";
 import {
   BookOpen,
@@ -7,7 +8,6 @@ import {
   Code2,
   FileText,
   ArrowRight,
-  Terminal,
   MoreHorizontal,
   PlayCircle,
 } from "lucide-react";
@@ -138,7 +138,10 @@ export default function StudentDashboard() {
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1 font-mono text-sm">
                 <span className="text-brand-blue">user.status</span> ={" "}
-                <span className="text-emerald-400">"ready_to_code"</span>;
+                <span className="text-emerald-400">
+                  `&quot;`ready_to_code`&quot;`
+                </span>
+                ;
               </p>
             </div>
             <Link
@@ -235,9 +238,11 @@ export default function StudentDashboard() {
                 >
                   {/* Image Container */}
                   <div className="h-40 relative bg-gray-200 dark:bg-gray-900 overflow-hidden">
-                    <img
+                    <Image
                       src={material.image}
                       alt={material.title}
+                      width={800}
+                      height={400}
                       className="object-cover w-full h-full opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
                     />
                     {/* Overlay badge */}

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 // Using Lucide icons for the toggle, or you can use your custom SVGs
 import { Sun, Moon } from "lucide-react";
@@ -37,7 +38,7 @@ export default function Login() {
         router.push("/");
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError(`An unexpected error occurred. Please try again. ${err}`);
     } finally {
       setLoading(false);
     }
@@ -59,7 +60,7 @@ export default function Login() {
         setError(error.message);
       }
     } catch (err) {
-      setError("Failed to sign in with Google");
+      setError(`Failed to sign in with Google ${err}`);
     } finally {
       setLoading(false);
     }
@@ -81,7 +82,7 @@ export default function Login() {
         setError(error.message);
       }
     } catch (err) {
-      setError("Failed to sign in with GitHub");
+      setError(`Failed to sign in with GitHub ${err}`);
     } finally {
       setLoading(false);
     }
@@ -110,7 +111,7 @@ export default function Login() {
         <div className="w-full max-w-md p-8 shadow-xl rounded-lg border transition-all bg-white dark:bg-[#1e293b] border-gray-200 dark:border-slate-800">
           {/* Header Section */}
           <div className="flex flex-col items-center mb-8">
-            <img
+            <Image
               src={
                 darkMode ? "/buildor_logo_dark.svg" : "/buildor_logo_light.svg"
               }
@@ -311,7 +312,7 @@ export default function Login() {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-gray-500 dark:text-slate-400">
-              Don't have an account?{" "}
+              Don`&apos;`t have an account?{" "}
             </span>
             <Link
               href="/auth/register"

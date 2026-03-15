@@ -6,7 +6,6 @@ import Layout from "@/components/Layout";
 import Link from "next/link";
 import {
   Search,
-  ChevronRight,
   ChevronDown,
   ChevronUp,
   Users,
@@ -302,8 +301,6 @@ function PerformanceChart({
 }: {
   performance: StudentPerformance;
 }) {
-  const maxVal = 100;
-
   const getBarColor = (value: number) => {
     if (value >= 75) return "bg-emerald-500 dark:bg-emerald-400";
     if (value >= 50) return "bg-brand-blue dark:bg-blue-400";
@@ -396,6 +393,9 @@ function StudentCard({
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {student.email}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {classId.toUpperCase()} - {completionPct}% complete
             </p>
           </div>
         </div>
@@ -516,17 +516,19 @@ function StudentCard({
 
 export default function ClassDetailPage() {
   const params = useParams();
-  const classId = params.classId as string;
+  const classId = (params?.classId as string) || "";
   const [activeTab, setActiveTab] = useState<"students" | "materials">(
     "students",
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"rank" | "solved" | "name">("rank");
   const [showQuestionForm, setShowQuestionForm] = useState(false);
-  const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
 
   const classInfo = classDetails[classId];
-  const students = mockStudents[classId] || [];
+  const students = useMemo(() => {
+    return mockStudents[classId] || [];
+  }, [classId]);
 
   const filteredStudents = useMemo(() => {
     let filtered = students.filter((s) =>
@@ -768,8 +770,8 @@ interface Question {
 }
 
 interface TestCase {
-  input: any;
-  expected_output: any;
+  input: Record<string, unknown>;
+  expected_output: unknown;
   is_sample: boolean;
 }
 
@@ -1157,6 +1159,8 @@ function QuestionForm({
             />
           </div>
 
+          <p>{classId}</p>
+
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1185,7 +1189,7 @@ function QuestionForm({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    difficulty: e.target.value as any,
+                    difficulty: e.target.value as "Easy" | "Medium" | "Hard",
                   })
                 }
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none dark:bg-gray-700 dark:text-white"

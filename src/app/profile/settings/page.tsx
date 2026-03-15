@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import {
   User,
-  Mail,
   Lock,
   Bell,
   Github,
@@ -20,6 +19,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import Image from "next/image";
 import {
   ThemeMode,
   PublicProfileFormData,
@@ -308,7 +308,7 @@ function PublicProfileSettingsForm({
           <div className="relative group">
             <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               {avatarUrl ? (
-                <img
+                <Image
                   src={avatarUrl}
                   alt="Avatar"
                   className="w-full h-full object-cover"
@@ -674,7 +674,7 @@ interface AppearanceSettingsProps {
 
 function AppearanceSettings({ appearanceData }: AppearanceSettingsProps) {
   const [theme, setTheme] = useState<ThemeMode>(appearanceData.theme);
-  const [saving, setSaving] = useState(false);
+  const [, setSaving] = useState(false);
   const [status, setStatus] = useState<{
     type: "success" | "error";
     message: string;

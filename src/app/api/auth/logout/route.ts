@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-export async function POST(request: Request) {
+// Removed the parameter entirely
+export async function POST() { 
   const supabase = await createClient()
   
   try {

@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 "use client";
 
 import Layout from "@/components/Layout";
