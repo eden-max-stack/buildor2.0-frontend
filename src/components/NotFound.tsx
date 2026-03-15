@@ -1,18 +1,18 @@
-"use client";
+"use client"; // Add this if it's missing, as hooks need Client Components
 
-import { useLocation } from "react-router-dom";
+import { usePathname } from "next/navigation"; // Next.js equivalent of useLocation
 import { useEffect } from "react";
 import Link from "next/link";
 
 const NotFound = () => {
-  const location = useLocation();
+  const pathname = usePathname(); // Get the current path
 
   useEffect(() => {
     console.error(
       "404 Error: User attempted to access non-existent route:",
-      location.pathname,
+      pathname,
     );
-  }, [location.pathname]);
+  }, [pathname]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
