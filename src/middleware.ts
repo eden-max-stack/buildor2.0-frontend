@@ -87,17 +87,17 @@ export async function middleware(request: NextRequest) {
   
   // TEMPORARILY DISABLED - Auth protection removed
   // If NO user and trying to access a protected route -> Redirect to Login
-  // if (!user && !isAuthRoute) {
-  //   const loginUrl = new URL('/auth/login', request.url)
-  //   // Optional: Add a redirect param to send them back where they came from
-  //   loginUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname)
-  //   return NextResponse.redirect(loginUrl)
-  // }
+  if (!user && !isAuthRoute) {
+    const loginUrl = new URL('/auth/login', request.url)
+    // Optional: Add a redirect param to send them back where they came from
+    loginUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname)
+    return NextResponse.redirect(loginUrl)
+  }
 
   // If USER exists and trying to access Login/Register -> Redirect to Home
-  // if (user && isAuthRoute) {
-  //    return NextResponse.redirect(new URL('/', request.url))
-  // }
+  if (user && isAuthRoute) {
+     return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
 
   return response
 }
