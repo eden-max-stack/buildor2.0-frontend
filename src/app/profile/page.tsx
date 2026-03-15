@@ -700,7 +700,7 @@ function getLanguageColor(lang: string): string {
 }
 
 function getPlatformIcon(platform: string) {
-  const iconMap: Record<string, JSX.Element> = {
+  const iconMap: Record<string, React.JSX.Element> = {
     GitHub: <Github className="w-4 h-4" />,
     LinkedIn: <Briefcase className="w-4 h-4" />,
     LeetCode: <Code className="w-4 h-4" />,
