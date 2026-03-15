@@ -27,26 +27,17 @@ jobs:
             ~/.npm
             src/node_modules
             src/.next/cache
-          # hash package-lock/yarn.lock inside src
           key: ${{ runner.os }}-node-${{ hashFiles('src/**/package-lock.json', 'src/**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Install dependencies (in src)
+      - name: Install dependencies
         working-directory: ./src
         run: npm ci
 
-      - name: Build (production) (in src)
+      - name: Build
         working-directory: ./src
         run: npm run build
-
-      - name: Upload build artifact (optional)
-        uses: actions/upload-artifact@v4
-        with:
-          name: next-build
-          path: |
-            src/.next
-            src/package.json
 
   test:
     name: Lint & Test
@@ -54,30 +45,29 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Install deps (in src)
+      - name: Install deps
         working-directory: ./src
         run: npm ci
-
-      - name: Lint (in src)
+      - name: Lint
         working-directory: ./src
         run: npm run lint || true
-
-      - name: Run tests (in src)
+      - name: Run tests
         working-directory: ./src
         run: npm test
-
 
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    # Only run this job if we are pushing to main
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [build, test]
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -101,4 +91,3 @@ jobs:
       - name: Deploy to Vercel
         working-directory: ./src
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-   
