@@ -224,15 +224,14 @@ export default function PublicStudentProfile() {
 
                     <article className="prose dark:prose-invert max-w-none">
                       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                        Hi there! 👋 I`&apos;`m Alice
+                        Hi there! 👋 I&apos;m Alice
                       </h3>
                       <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
-                        I`&apos;`m a passionate developer currently solving
+                        I&apos;m a passionate developer currently solving
                         complex algorithmic challenges. I focus primarily on
                         distributed systems and backend engineering. When
-                        I`&apos;`m not studying for my CS degree, you can find
-                        me competing in hackathons or optimizing my Neovim
-                        config.
+                        I&apos;m not studying for my CS degree, you can find me
+                        competing in hackathons or optimizing my Neovim config.
                       </p>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

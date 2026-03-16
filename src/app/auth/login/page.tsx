@@ -312,7 +312,7 @@ export default function Login() {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-gray-500 dark:text-slate-400">
-              Don`&apos;`t have an account?{" "}
+              Don&apos;t have an account?{" "}
             </span>
             <Link
               href="/auth/register"

@@ -366,7 +366,7 @@ export default function TrainerProfile() {
                         </div>
 
                         <p className="text-sm text-gray-700 dark:text-gray-300 italic mb-4 leading-relaxed">
-                          `&quot;`{review.text}`&quot;`
+                          &quot;{review.text}&quot;
                         </p>
 
                         <div className="flex items-center justify-between text-xs text-gray-500 font-medium border-t border-gray-200 dark:border-gray-700/50 pt-3">

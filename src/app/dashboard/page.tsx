@@ -139,7 +139,7 @@ export default function StudentDashboard() {
               <p className="text-gray-600 dark:text-gray-400 mt-1 font-mono text-sm">
                 <span className="text-brand-blue">user.status</span> ={" "}
                 <span className="text-emerald-400">
-                  `&quot;`ready_to_code`&quot;`
+                  &quot;ready_to_code&quot;
                 </span>
                 ;
               </p>

@@ -126,7 +126,7 @@ export default function LearningDashboard() {
               {/* Today's Goals */}
               <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-xl p-6 shadow-sm">
                 <h2 className="font-bold text-gray-900 dark:text-white mb-4">
-                  Today`&quot;`s goals
+                  Today&quot;s goals
                 </h2>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3 group cursor-pointer">

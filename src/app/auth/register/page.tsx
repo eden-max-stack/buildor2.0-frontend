@@ -388,7 +388,7 @@ export default function Register() {
                   Setup Profile
                 </h1>
                 <p className="text-gray-500 dark:text-slate-400 mt-2">
-                  Let`&apos;`s personalize your profile.
+                  Let&apos;s personalize your profile.
                 </p>
               </div>
 

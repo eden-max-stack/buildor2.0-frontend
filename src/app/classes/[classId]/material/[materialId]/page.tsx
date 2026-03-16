@@ -223,8 +223,8 @@ export default function MaterialView() {
               <article className="prose dark:prose-invert prose-blue max-w-none">
                 {/* Note: In a real app, you would use a Markdown parser like 'react-markdown' here */}
                 <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-                  Dijkstra`&quot;`s algorithm allows us to find the shortest
-                  path between any two vertices of a graph.
+                  Dijkstra&quot;s algorithm allows us to find the shortest path
+                  between any two vertices of a graph.
                 </p>
                 <p className="text-gray-600 dark:text-gray-400 mb-8">
                   It differs from the minimum spanning tree because the shortest

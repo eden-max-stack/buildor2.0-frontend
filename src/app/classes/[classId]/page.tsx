@@ -624,10 +624,10 @@ export default function ClassHub() {
                       <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 relative">
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-l-xl"></div>
                         <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                          `&quot;`Great job on the Dijkstra assignment! Your use
+                          &quot;Great job on the Dijkstra assignment! Your use
                           of the priority queue was perfectly optimized. For the
                           next module, try to focus on edge cases where negative
-                          weights exist.`&quot;`
+                          weights exist.&quot;
                         </p>
                         <div className="flex items-center gap-2 mt-3 text-xs text-gray-500">
                           <span className="font-medium text-gray-900 dark:text-gray-200">
@@ -642,10 +642,9 @@ export default function ClassHub() {
                       <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 relative">
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-blue rounded-l-xl"></div>
                         <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                          `&quot;`Welcome to the class! Make sure to complete
-                          the prerequisite sandbox environment setup by Friday
-                          so you are ready for the first graded
-                          challenge.`&quot;`
+                          &quot;Welcome to the class! Make sure to complete the
+                          prerequisite sandbox environment setup by Friday so
+                          you are ready for the first graded challenge.&quot;
                         </p>
                         <div className="flex items-center gap-2 mt-3 text-xs text-gray-500">
                           <span className="font-medium text-gray-900 dark:text-gray-200">

@@ -238,9 +238,9 @@ function OverviewTab({
               Hi there! 👋
             </h3>
             <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">
-              I`&apos;`m a passionate developer currently solving complex
-              algorithmic challenges. I`&apos;`m working on innovative projects
-              to grow my skills.
+              I&apos;m a passionate developer currently solving complex
+              algorithmic challenges. I&apos;m working on innovative projects to
+              grow my skills.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
@@ -512,9 +512,9 @@ function PortfolioTab({
                 Hi there! 👋
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">
-                I`&apos;`m a passionate developer currently solving complex
-                algorithmic challenges. I`&apos;`m working on innovative
-                projects to sharpen my problem-solving skills.
+                I&apos;m a passionate developer currently solving complex
+                algorithmic challenges. I&apos;m working on innovative projects
+                to sharpen my problem-solving skills.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
@@ -578,7 +578,7 @@ function PortfolioTab({
                 </div>
                 <div className="pl-12">
                   <p className="text-gray-600 dark:text-gray-300 text-sm italic">
-                    `&quot;`{fb.comment}`&quot;`
+                    &quot;{fb.comment}&quot;
                   </p>
                 </div>
               </div>
