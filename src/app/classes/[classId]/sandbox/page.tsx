@@ -731,6 +731,24 @@ export default function CodeSandbox() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        {/* --- SECURITY NOTICE BANNER --- */}
+        <div className="bg-brand-amber/10 border border-brand-amber/30 rounded-xl p-5 flex items-start gap-4">
+          <AlertCircle className="w-6 h-6 text-brand-amber shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-brand-dark dark:text-amber-200 text-base">
+              Sandbox Execution Disabled
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-amber-100/70 mt-1.5 leading-relaxed">
+              This interactive code execution feature has not been fully
+              activated yet. We are currently incorporating critical security
+              patches into the backend isolated environment before it can be
+              safely deployed for live code execution. The interface below is a
+              visual preview.
+            </p>
+          </div>
+        </div>
+        {/* ------------------------------ */}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
