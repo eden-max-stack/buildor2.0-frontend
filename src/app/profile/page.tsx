@@ -51,7 +51,6 @@ export default function Profile({
   // statistics = mockProfileData.statistics,
 }: Partial<ProfileProps> = {}) {
   const [activeTab, setActiveTab] = useState<TabName>("Overview");
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
   const renderContent = () => {
     switch (activeTab) {
@@ -106,7 +105,7 @@ export default function Profile({
 
                 <button
                   className="w-full mb-6 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium transition-colors text-sm flex items-center justify-center gap-2"
-                  onClick={() => redirect(`${apiUrl}/profile/settings`)}
+                  onClick={() => redirect("/profile/settings")}
                 >
                   <Settings className="w-4 h-4" /> Edit Profile
                 </button>

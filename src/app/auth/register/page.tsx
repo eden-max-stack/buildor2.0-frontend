@@ -15,8 +15,6 @@ export default function Register() {
   const [error, setError] = useState<string | null>(null);
   const supabase = useMemo(() => createClient(), []);
 
-  const apiUrl = process.env.NEXT_PUBLIC_URL;
-
   // State for form fields
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -76,7 +74,7 @@ export default function Register() {
       }
 
       if (data.user) {
-        router.push(`${apiUrl}/dashboard`);
+        router.push("/");
       }
     } catch (err) {
       setError(`An unexpected error occurred. Please try again. ${err}`);

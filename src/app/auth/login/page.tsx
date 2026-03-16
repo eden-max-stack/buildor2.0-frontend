@@ -18,8 +18,6 @@ export default function Login() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
-  const apiUrl = process.env.NEXT_PUBLIC_URL;
-
   const signInWithEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -37,7 +35,7 @@ export default function Login() {
       }
 
       if (data.user) {
-        router.push(`${apiUrl}/dashboard`);
+        router.push("/");
       }
     } catch (err) {
       setError(`An unexpected error occurred. Please try again. ${err}`);
