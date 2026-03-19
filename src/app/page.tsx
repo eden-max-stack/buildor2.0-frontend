@@ -50,7 +50,7 @@ export default function Index() {
                   View Leaderboard <ChevronRight className="w-4 h-4" />
                 </Link>
                 <Link
-                  href="/questions"
+                  href="/dashboard"
                   className="inline-flex items-center justify-center gap-2 bg-brand-amber text-brand-dark px-8 py-3 rounded-lg font-semibold hover:bg-amber-400 transition-all hover:shadow-lg active:scale-95"
                 >
                   Start Solving <ChevronRight className="w-4 h-4" />
@@ -302,7 +302,7 @@ const categories = 7;`}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/questions"
+              href="/dashboard"
               className="inline-flex items-center justify-center gap-2 bg-brand-blue text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-all hover:shadow-lg active:scale-95"
             >
               Explore Problems <ChevronRight className="w-4 h-4" />

@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Code2, Bell, LogOut, User, Sun, Moon } from "lucide-react";
+import { createBrowserClient } from "@supabase/ssr";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isDark, setIsDark] = useState(false);
 
   // Initialize theme based on system preference or saved localStorage
@@ -37,6 +39,21 @@ export default function Navbar() {
       localStorage.setItem("theme", "dark");
       setIsDark(true);
     }
+  };
+
+  const handleLogout = async () => {
+    // Initialize Supabase browser client
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    );
+
+    // Sign out of Supabase
+    await supabase.auth.signOut();
+
+    // Redirect to home and refresh the router to clear any cached user state
+    router.push("/");
+    router.refresh();
   };
 
   const navLinks = [
@@ -116,6 +133,7 @@ export default function Navbar() {
             <button
               className="p-2 text-gray-500 hover:text-brand-red dark:text-gray-400 dark:hover:text-brand-red rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               title="Logout"
+              onClick={handleLogout}
             >
               <LogOut className="w-5 h-5" />
             </button>

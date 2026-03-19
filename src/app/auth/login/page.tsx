@@ -116,6 +116,8 @@ export default function Login() {
                 darkMode ? "/buildor_logo_dark.svg" : "/buildor_logo_light.svg"
               }
               alt="Logo"
+              width={48}
+              height={48}
               className="h-16 w-auto mb-4"
             />
             <h1 className="text-3xl font-bold text-black dark:text-white">

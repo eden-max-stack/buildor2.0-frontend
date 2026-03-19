@@ -34,7 +34,6 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
-          // This updates the cookie on the request object
           request.cookies.set({
             name,
             value,
@@ -45,7 +44,6 @@ export async function middleware(request: NextRequest) {
               headers: request.headers,
             },
           })
-          // This updates the cookie on the response object
           response.cookies.set({
             name,
             value,
@@ -77,26 +75,28 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // 4. Define paths
-  // Add '/auth' to catch all auth related routes (login, register, callback)
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/auth')
-  const isPublicRoute = ['/auth/login', '/auth/register', '/auth/callback'].some(path => 
-    request.nextUrl.pathname.startsWith(path)
-  )
+  const currentPath = request.nextUrl.pathname;
+  const isAuthRoute = currentPath.startsWith('/auth');
+  const isHomePage = currentPath === '/';
 
   // 5. Protection Logic
   
-  // TEMPORARILY DISABLED - Auth protection removed
-  // If NO user and trying to access a protected route -> Redirect to Login
-  if (!user && !isAuthRoute) {
-    const loginUrl = new URL('/auth/login', request.url)
-    // Optional: Add a redirect param to send them back where they came from
-    loginUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname)
-    return NextResponse.redirect(loginUrl)
-  }
-
-  // If USER exists and trying to access Login/Register -> Redirect to Home
-  if (user && isAuthRoute) {
-     return NextResponse.redirect(new URL('/dashboard', request.url))
+  if (!user) {
+    // If NO user exists, and they are trying to access a route that ISN'T 
+    // the home page and ISN'T an auth page -> Redirect to Login
+    if (!isHomePage && !isAuthRoute) {
+      const loginUrl = new URL('/auth/login', request.url)
+      // Optional: Add a redirect param to send them back where they came from
+      loginUrl.searchParams.set('redirectedFrom', currentPath)
+      return NextResponse.redirect(loginUrl)
+    }
+  } else {
+    // If USER exists and trying to access Login/Register -> Redirect to Dashboard
+    if (isAuthRoute) {
+       return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+    // Notice we do NOT redirect if they visit the home page (/). 
+    // They are free to view it while logged in.
   }
 
   return response

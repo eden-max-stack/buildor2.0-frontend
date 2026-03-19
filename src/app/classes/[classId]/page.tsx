@@ -20,6 +20,8 @@ import {
   Square,
   Star,
   MessageSquare,
+  Clock,
+  Calendar,
 } from "lucide-react";
 
 // --- Mock Data ---
@@ -105,6 +107,42 @@ const courseModules = [
         completed: false,
       },
     ],
+  },
+];
+
+const classTasks = [
+  {
+    id: "t1",
+    title: "Implement Dijkstra's Algorithm",
+    description:
+      "Write a highly optimized C++ or Java implementation of Dijkstra's algorithm. Ensure it handles disconnected graphs and edge cases correctly.",
+    type: "Assignment",
+    points: 100,
+    dueDate: "Today, 11:59 PM",
+    status: "urgent",
+    completed: false,
+  },
+  {
+    id: "t2",
+    title: "Read Chapter 4: Network Flows",
+    description:
+      "Complete the assigned reading on Max-Flow Min-Cut theorem before Thursday's live session.",
+    type: "Reading",
+    points: 0,
+    dueDate: "Tomorrow, 10:00 AM",
+    status: "pending",
+    completed: false,
+  },
+  {
+    id: "t3",
+    title: "Graph Representations Quiz",
+    description: "Multiple choice quiz covering Adjacency Matrices and Lists.",
+    type: "Quiz",
+    points: 50,
+    dueDate: "Last Friday",
+    status: "graded",
+    score: "48/50",
+    completed: true,
   },
 ];
 
@@ -575,8 +613,97 @@ export default function ClassHub() {
 
             {/* TASKS TAB */}
             {activeTab === "tasks" && (
-              <div className="max-w-3xl space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {/* Tasks content remains exactly the same */}
+              <div className="max-w-4xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center justify-between mb-2 px-2">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Upcoming & Past Tasks
+                  </h2>
+                  <span className="text-sm text-brand-blue font-medium bg-brand-blue/10 px-3 py-1 rounded-full border border-brand-blue/20">
+                    {classTasks.filter((t) => !t.completed).length} Pending
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  {classTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className={`bg-white dark:bg-gray-800/30 border rounded-xl p-5 flex flex-col sm:flex-row gap-4 transition-all group ${
+                        task.completed
+                          ? "border-gray-200 dark:border-gray-700/50 opacity-75"
+                          : "border-gray-200 dark:border-gray-700/50 hover:border-brand-blue/50 hover:shadow-md"
+                      }`}
+                    >
+                      {/* Status Icon */}
+                      <div className="shrink-0 mt-1">
+                        {task.completed ? (
+                          <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                        ) : (
+                          <Circle className="w-6 h-6 text-gray-300 dark:text-gray-600 group-hover:text-brand-blue transition-colors cursor-pointer" />
+                        )}
+                      </div>
+
+                      {/* Task Content */}
+                      <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-2">
+                          <div>
+                            <h3
+                              className={`font-semibold text-lg transition-colors cursor-pointer ${
+                                task.completed
+                                  ? "text-gray-500 dark:text-gray-400 line-through decoration-gray-400/50"
+                                  : "text-gray-900 dark:text-white group-hover:text-brand-blue"
+                              }`}
+                            >
+                              {task.title}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
+                              <span className="font-medium">{task.type}</span>
+                              {task.points > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span>{task.points} pts</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Status Badge */}
+                          <div className="shrink-0">
+                            {task.completed ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 whitespace-nowrap">
+                                Score: {task.score}
+                              </span>
+                            ) : (
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border whitespace-nowrap ${
+                                  task.status === "urgent"
+                                    ? "bg-brand-red/10 text-brand-red border-brand-red/20"
+                                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                                }`}
+                              >
+                                {task.status === "urgent" ? (
+                                  <Clock className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Calendar className="w-3.5 h-3.5" />
+                                )}
+                                Due {task.dueDate}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <p
+                          className={`text-sm mt-3 ${
+                            task.completed
+                              ? "text-gray-400 dark:text-gray-500"
+                              : "text-gray-600 dark:text-gray-300"
+                          }`}
+                        >
+                          {task.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
