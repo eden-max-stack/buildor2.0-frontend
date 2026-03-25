@@ -115,3 +115,13 @@ export interface FormValidationResult {
   isValid: boolean;
   errors: ValidationError[];
 }
+
+// Update your models.ts to include this interface
+export interface StudentProfileFormData {
+  university: string;
+  degree: string;
+  expected_grad_year: number | "";
+  gpa: number | "";
+  portfolio_md: string;
+  github_url: string;
+}

@@ -26,6 +26,7 @@ import {
   ChangePasswordData,
   NotificationSettings,
   UserSettings,
+  StudentProfileFormData,
 } from "./models";
 import {
   fetchUserSettings,
@@ -38,6 +39,7 @@ import {
   validateAvatarFile,
   validatePassword,
 } from "./settings-api";
+import { createClient } from "@/lib/supabase/client";
 
 type SettingsTab =
   | "Public Profile"
@@ -212,18 +214,25 @@ interface PublicProfileSettingsFormProps {
   profileData: UserSettings["publicProfile"];
 }
 
+interface StudentProfileSettingsFormProps {
+  profileData?: StudentProfileFormData; // Optional if loading for the first time
+}
+
 function PublicProfileSettingsForm({
   profileData,
-}: PublicProfileSettingsFormProps) {
-  const [formData, setFormData] = useState<PublicProfileFormData>({
-    displayName: profileData.displayName,
-    bio: profileData.bio,
-    website: profileData.website,
-    githubUsername: profileData.githubUsername,
+}: StudentProfileSettingsFormProps) {
+  const supabase = createClient();
+
+  const [formData, setFormData] = useState<StudentProfileFormData>({
+    university: profileData?.university || "",
+    degree: profileData?.degree || "",
+    expected_grad_year: profileData?.expected_grad_year || "",
+    gpa: profileData?.gpa || "",
+    portfolio_md: profileData?.portfolio_md || "",
+    github_url: profileData?.github_url || "",
   });
-  const [avatarUrl, setAvatarUrl] = useState(profileData.avatarUrl || "");
+
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<{
     type: "success" | "error";
     message: string;
@@ -232,35 +241,11 @@ function PublicProfileSettingsForm({
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
+    const { name, value, type } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
     });
-  };
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const validation = validateAvatarFile(file);
-    if (!validation.valid) {
-      setStatus({ type: "error", message: validation.error || "Invalid file" });
-      return;
-    }
-
-    setUploading(true);
-    setStatus(null);
-
-    const response = await uploadAvatar(file);
-
-    if (response.success && response.data) {
-      setAvatarUrl(response.data.avatarUrl);
-      setStatus({ type: "success", message: "Avatar uploaded successfully!" });
-    } else {
-      setStatus({ type: "error", message: response.error || "Upload failed" });
-    }
-
-    setUploading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -268,18 +253,44 @@ function PublicProfileSettingsForm({
     setSaving(true);
     setStatus(null);
 
-    const response = await updatePublicProfile(formData);
+    try {
+      // 1. Get the current user's secure session token
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-    if (response.success) {
-      setStatus({ type: "success", message: "Profile updated successfully!" });
-    } else {
+      if (sessionError || !session) {
+        throw new Error("You must be logged in to save settings.");
+      }
+
+      // 2. Send data to your localhost:8000 REST API
+      const response = await fetch(
+        "http://localhost:8000/api/profile/student",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`, // Pass token for backend verification
+          },
+          body: JSON.stringify(formData),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to update profile");
+      }
+
       setStatus({
-        type: "error",
-        message: response.error || "Failed to update profile",
+        type: "success",
+        message: "Student profile updated successfully!",
       });
+    } catch (err: any) {
+      setStatus({ type: "error", message: err.message });
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   };
 
   return (
@@ -287,178 +298,160 @@ function PublicProfileSettingsForm({
       onSubmit={handleSubmit}
       className="space-y-6 animate-in fade-in duration-300"
     >
-      {/* Header */}
       <div>
         <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-          Public Profile
+          Student Profile
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          This information will be displayed publicly.
+          Update your academic and portfolio details.
         </p>
       </div>
       <hr className="border-gray-200 dark:border-gray-700" />
 
-      {/* Status Message */}
       {status && <StatusMessage type={status.type} message={status.message} />}
 
-      {/* Form */}
-      <div className="space-y-6">
-        {/* Avatar Section */}
-        <div className="flex items-start gap-6">
-          <div className="relative group">
-            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              {avatarUrl ? (
-                <Image
-                  src={avatarUrl}
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-12 h-12 text-gray-400 dark:text-gray-500" />
-              )}
-            </div>
-            {uploading && (
-              <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center">
-                <Loader2 className="w-6 h-6 text-white animate-spin" />
-              </div>
-            )}
+      <div className="grid grid-cols-1 gap-6 max-w-2xl">
+        {/* University & Degree */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             <label
-              htmlFor="avatar-upload"
-              className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              htmlFor="university"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              <Camera className="w-6 h-6 text-white" />
+              University
             </label>
             <input
-              id="avatar-upload"
-              type="file"
-              accept="image/jpeg,image/jpg,image/png,image/gif"
-              onChange={handleAvatarUpload}
-              className="hidden"
+              id="university"
+              name="university"
+              type="text"
+              value={formData.university}
+              onChange={handleInputChange}
+              placeholder="SRM Institute of Science and Technology"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 border focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
           </div>
-          <div className="pt-2">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-              Profile Picture
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-3">
-              JPG, GIF or PNG. Max size of 800KB.
-            </p>
+          <div>
             <label
-              htmlFor="avatar-upload"
-              className="cursor-pointer inline-block px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+              htmlFor="degree"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Upload new picture
+              Degree / Major
             </label>
+            <input
+              id="degree"
+              name="degree"
+              type="text"
+              value={formData.degree}
+              onChange={handleInputChange}
+              placeholder="B.Tech Computer Science and Engineering"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 border focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
           </div>
         </div>
 
-        {/* Text Inputs */}
-        <div className="grid grid-cols-1 gap-6 max-w-2xl">
+        {/* Grad Year & GPA */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
-              htmlFor="displayName"
+              htmlFor="expected_grad_year"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Display Name
+              Expected Graduation Year
             </label>
             <input
-              id="displayName"
-              name="displayName"
-              type="text"
-              value={formData.displayName}
+              id="expected_grad_year"
+              name="expected_grad_year"
+              type="number"
+              min="2000"
+              max="2030"
+              value={formData.expected_grad_year}
               onChange={handleInputChange}
-              placeholder="Alex Developer"
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+              placeholder="2026"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 border focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
           </div>
-
           <div>
             <label
-              htmlFor="bio"
+              htmlFor="gpa"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Bio
+              GPA
             </label>
-            <textarea
-              id="bio"
-              name="bio"
-              rows={3}
-              value={formData.bio}
+            <input
+              id="gpa"
+              name="gpa"
+              type="number"
+              step="0.01"
+              min="0"
+              max="10"
+              value={formData.gpa}
               onChange={handleInputChange}
-              placeholder="Full-stack enthusiast building scalable apps. Loves React, Node.js, and coffee."
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+              placeholder="3.80"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 border focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Brief description for your profile.
-            </p>
           </div>
+        </div>
 
-          <div>
-            <label
-              htmlFor="website"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Website
-            </label>
-            <div className="mt-1 flex rounded-md shadow-sm">
-              <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 sm:text-sm">
-                <Globe className="w-4 h-4" />
-              </span>
-              <input
-                id="website"
-                name="website"
-                type="url"
-                value={formData.website}
-                onChange={handleInputChange}
-                placeholder="https://alexdev.portfolio"
-                className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-              />
-            </div>
+        {/* Links & Portfolio */}
+        <div>
+          <label
+            htmlFor="github_url"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            GitHub URL
+          </label>
+          <div className="mt-1 flex rounded-md shadow-sm">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 sm:text-sm">
+              <Github className="w-4 h-4" />
+            </span>
+            <input
+              id="github_url"
+              name="github_url"
+              type="url"
+              value={formData.github_url}
+              onChange={handleInputChange}
+              placeholder="https://github.com/yourusername"
+              className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+            />
           </div>
+        </div>
 
-          <div>
-            <label
-              htmlFor="githubUsername"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              GitHub Username
-            </label>
-            <div className="mt-1 flex rounded-md shadow-sm">
-              <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 sm:text-sm">
-                <Github className="w-4 h-4" />
-              </span>
-              <input
-                id="githubUsername"
-                name="githubUsername"
-                type="text"
-                value={formData.githubUsername}
-                onChange={handleInputChange}
-                placeholder="alex_dev_24"
-                className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-              />
-            </div>
-          </div>
+        <div>
+          <label
+            htmlFor="portfolio_md"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Portfolio / Bio (Markdown supported)
+          </label>
+          <textarea
+            id="portfolio_md"
+            name="portfolio_md"
+            rows={5}
+            value={formData.portfolio_md}
+            onChange={handleInputChange}
+            placeholder="Tell us about the projects you've built..."
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border font-mono"
+          />
+        </div>
 
-          <div className="pt-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md shadow-sm transition-colors"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Save Changes
-                </>
-              )}
-            </button>
-          </div>
+        <div className="pt-4">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md shadow-sm transition-colors"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Profile
+              </>
+            )}
+          </button>
         </div>
       </div>
     </form>

@@ -613,8 +613,8 @@ export default function ClassHub() {
 
             {/* TASKS TAB */}
             {activeTab === "tasks" && (
-              <div className="max-w-4xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center justify-between mb-2 px-2">
+              <div className="max-w-4xl space-y-6">
+                <div className="flex items-center justify-between mb-4 px-2">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                     Upcoming & Past Tasks
                   </h2>
@@ -627,10 +627,10 @@ export default function ClassHub() {
                   {classTasks.map((task) => (
                     <div
                       key={task.id}
-                      className={`bg-white dark:bg-gray-800/30 border rounded-xl p-5 flex flex-col sm:flex-row gap-4 transition-all group ${
+                      className={`bg-white dark:bg-gray-800/80 border rounded-xl p-6 flex flex-col sm:flex-row gap-5 transition-all ${
                         task.completed
-                          ? "border-gray-200 dark:border-gray-700/50 opacity-75"
-                          : "border-gray-200 dark:border-gray-700/50 hover:border-brand-blue/50 hover:shadow-md"
+                          ? "border-gray-200 dark:border-gray-700/50 opacity-60"
+                          : "border-gray-300 dark:border-gray-600 shadow-sm hover:border-brand-blue/50"
                       }`}
                     >
                       {/* Status Icon */}
@@ -638,25 +638,27 @@ export default function ClassHub() {
                         {task.completed ? (
                           <CheckCircle2 className="w-6 h-6 text-emerald-500" />
                         ) : (
-                          <Circle className="w-6 h-6 text-gray-300 dark:text-gray-600 group-hover:text-brand-blue transition-colors cursor-pointer" />
+                          <Circle className="w-6 h-6 text-gray-400 dark:text-gray-500" />
                         )}
                       </div>
 
                       {/* Task Content */}
                       <div className="flex-1">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-2">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3">
                           <div>
                             <h3
-                              className={`font-semibold text-lg transition-colors cursor-pointer ${
+                              className={`font-bold text-lg ${
                                 task.completed
                                   ? "text-gray-500 dark:text-gray-400 line-through decoration-gray-400/50"
-                                  : "text-gray-900 dark:text-white group-hover:text-brand-blue"
+                                  : "text-gray-900 dark:text-white"
                               }`}
                             >
                               {task.title}
                             </h3>
-                            <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
-                              <span className="font-medium">{task.type}</span>
+                            <div className="flex items-center gap-2 mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+                              <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                {task.type}
+                              </span>
                               {task.points > 0 && (
                                 <>
                                   <span>•</span>
@@ -669,15 +671,15 @@ export default function ClassHub() {
                           {/* Status Badge */}
                           <div className="shrink-0">
                             {task.completed ? (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 whitespace-nowrap">
-                                Score: {task.score}
+                              <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                                Score: {task.score || "Pending"}
                               </span>
                             ) : (
                               <span
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border whitespace-nowrap ${
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${
                                   task.status === "urgent"
-                                    ? "bg-brand-red/10 text-brand-red border-brand-red/20"
-                                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                                    ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
+                                    : "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
                                 }`}
                               >
                                 {task.status === "urgent" ? (
@@ -692,10 +694,10 @@ export default function ClassHub() {
                         </div>
 
                         <p
-                          className={`text-sm mt-3 ${
+                          className={`text-sm leading-relaxed ${
                             task.completed
-                              ? "text-gray-400 dark:text-gray-500"
-                              : "text-gray-600 dark:text-gray-300"
+                              ? "text-gray-500 dark:text-gray-500"
+                              : "text-gray-700 dark:text-gray-300"
                           }`}
                         >
                           {task.description}
