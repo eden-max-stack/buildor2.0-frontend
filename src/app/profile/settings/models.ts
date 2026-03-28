@@ -57,11 +57,17 @@ export interface NotificationSettings {
 
 // --- COMPLETE SETTINGS DATA ---
 
+// --- COMPLETE SETTINGS DATA ---
+
 export interface UserSettings {
-  publicProfile: PublicProfileSettings;
+  publicProfile: PublicProfileSettings; // <-- untouched, won't break existing code
   account: AccountSettings;
   appearance: AppearanceSettings;
   notifications: NotificationSettings;
+  
+  // Add these as optional additions
+  studentProfile?: StudentProfileFormData;
+  trainerProfile?: TrainerProfileFormData;
 }
 
 // --- API RESPONSE TYPES ---
@@ -87,6 +93,7 @@ export interface PublicProfileUpdatePayload {
   website?: string;
   githubUsername?: string;
   location?: string;
+  skills: string[];
 }
 
 export interface AppearanceUpdatePayload {
@@ -122,6 +129,16 @@ export interface StudentProfileFormData {
   degree: string;
   expected_grad_year: number | "";
   gpa: number | "";
+  bio: string;
   portfolio_md: string;
   github_url: string;
+  location: string;
+  skills: string[];
 }
+
+
+export interface TrainerProfileFormData {
+  title: string;
+  workplace: string;
+}
+

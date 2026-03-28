@@ -7,8 +7,6 @@ import {
   Lock,
   Bell,
   Github,
-  Globe,
-  Camera,
   Save,
   Trash2,
   AlertTriangle,
@@ -18,25 +16,25 @@ import {
   Loader2,
   CheckCircle,
   XCircle,
+  MapPin,
+  X,
+  Briefcase,
+  Award,
 } from "lucide-react";
-import Image from "next/image";
 import {
   ThemeMode,
-  PublicProfileFormData,
   ChangePasswordData,
   NotificationSettings,
   UserSettings,
   StudentProfileFormData,
+  TrainerProfileFormData,
 } from "./models";
 import {
   fetchUserSettings,
-  updatePublicProfile,
-  uploadAvatar,
   changePassword,
   deleteAccount,
   updateAppearance,
   updateNotifications,
-  validateAvatarFile,
   validatePassword,
 } from "./settings-api";
 import { createClient } from "@/lib/supabase/client";
@@ -48,9 +46,11 @@ type SettingsTab =
   | "Notifications";
 
 export default function ProfileSettings() {
+  const [role, setRole] = useState<"STUDENT" | "TRAINER">("STUDENT");
   const [activeTab, setActiveTab] = useState<SettingsTab>("Public Profile");
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   // Fetch settings on mount
   useEffect(() => {
@@ -59,16 +59,32 @@ export default function ProfileSettings() {
 
   const loadSettings = async () => {
     setLoading(true);
-    const response = await fetchUserSettings();
 
-    if (response.success && response.data) {
-      setSettings(response.data);
-    } else {
-      console.error("Failed to load settings:", response.error);
-      // You could show a toast notification here
+    try {
+      // 1. Get secure session token & Extract Role (Mirroring the Profile page)
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (!sessionError && session) {
+        const userRole = session.user.user_metadata?.role || "STUDENT";
+        setRole(userRole);
+      }
+
+      // 2. Fetch all user settings
+      const response = await fetchUserSettings();
+
+      if (response.success && response.data) {
+        setSettings(response.data);
+      } else {
+        console.error("Failed to load settings:", response.error);
+      }
+    } catch (err) {
+      console.error("Error loading profile settings:", err);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   // Helper to render the active form content
@@ -91,9 +107,21 @@ export default function ProfileSettings() {
           <NotificationSettingsForm notificationData={settings.notifications} />
         );
       default:
-        return (
-          <PublicProfileSettingsForm profileData={settings.publicProfile} />
-        );
+        // --- DYNAMIC RENDERING BASED ON SUPABASE ROLE ---
+        if (role === "TRAINER") {
+          return (
+            <TrainerProfileSettingsForm
+              // Cast to any to bypass strict UserSettings typings if needed
+              profileData={settings.publicProfile as any}
+            />
+          );
+        } else {
+          return (
+            <StudentProfileSettingsForm
+              profileData={settings.publicProfile as any}
+            />
+          );
+        }
     }
   };
 
@@ -119,7 +147,10 @@ export default function ProfileSettings() {
                   active={activeTab === "Public Profile"}
                   onClick={() => setActiveTab("Public Profile")}
                   icon={<User className="w-4 h-4" />}
-                  label="Public Profile"
+                  // Dynamically change the label based on role
+                  label={
+                    role === "TRAINER" ? "Trainer Profile" : "Student Profile"
+                  }
                 />
                 <NavButton
                   active={activeTab === "Account"}
@@ -209,16 +240,174 @@ function StatusMessage({
   );
 }
 
-// 3. Public Profile Form
-interface PublicProfileSettingsFormProps {
-  profileData: UserSettings["publicProfile"];
+// 3. Trainer Profile Form
+interface TrainerProfileSettingsFormProps {
+  profileData?: TrainerProfileFormData;
 }
 
+function TrainerProfileSettingsForm({
+  profileData,
+}: TrainerProfileSettingsFormProps) {
+  const supabase = createClient();
+
+  const [formData, setFormData] = useState<TrainerProfileFormData>({
+    title: profileData?.title || "",
+    workplace: profileData?.workplace || "",
+  });
+
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setStatus(null);
+
+    try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        throw new Error("You must be logged in to save settings.");
+      }
+
+      // Pointing to your FastAPI route
+      const response = await fetch(
+        "http://localhost:8000/api/profile/trainer",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(formData),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to update profile");
+      }
+
+      setStatus({
+        type: "success",
+        message: "Trainer profile updated successfully!",
+      });
+    } catch (err: any) {
+      setStatus({ type: "error", message: err.message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6 animate-in fade-in duration-300"
+    >
+      <div>
+        <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+          Professional Identity
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Update your current title and where you work.
+        </p>
+      </div>
+      <hr className="border-gray-200 dark:border-gray-700" />
+
+      {status && <StatusMessage type={status.type} message={status.message} />}
+
+      <div className="grid grid-cols-1 gap-6 max-w-2xl">
+        {/* Title Field */}
+        <div>
+          <label
+            htmlFor="title"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Professional Title
+          </label>
+          <div className="mt-1 flex rounded-md shadow-sm">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 sm:text-sm">
+              <Award className="w-4 h-4" />
+            </span>
+            <input
+              id="title"
+              name="title"
+              type="text"
+              required
+              value={formData.title}
+              onChange={handleInputChange}
+              placeholder="e.g. Senior Machine Learning Engineer"
+              className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+            />
+          </div>
+        </div>
+
+        {/* Workplace Field */}
+        <div>
+          <label
+            htmlFor="workplace"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Current Workplace
+          </label>
+          <div className="mt-1 flex rounded-md shadow-sm">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 sm:text-sm">
+              <Briefcase className="w-4 h-4" />
+            </span>
+            <input
+              id="workplace"
+              name="workplace"
+              type="text"
+              required
+              value={formData.workplace}
+              onChange={handleInputChange}
+              placeholder="e.g. OpenAI, Freelance, Google"
+              className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+            />
+          </div>
+        </div>
+
+        <div className="pt-4">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md shadow-sm transition-colors"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Profile
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+// 4. Student Profile Form
 interface StudentProfileSettingsFormProps {
-  profileData?: StudentProfileFormData; // Optional if loading for the first time
+  profileData?: StudentProfileFormData;
 }
 
-function PublicProfileSettingsForm({
+function StudentProfileSettingsForm({
   profileData,
 }: StudentProfileSettingsFormProps) {
   const supabase = createClient();
@@ -228,10 +417,14 @@ function PublicProfileSettingsForm({
     degree: profileData?.degree || "",
     expected_grad_year: profileData?.expected_grad_year || "",
     gpa: profileData?.gpa || "",
+    bio: profileData?.bio || "",
     portfolio_md: profileData?.portfolio_md || "",
     github_url: profileData?.github_url || "",
+    location: profileData?.location || "",
+    skills: profileData?.skills || [],
   });
 
+  const [skillInput, setSkillInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{
     type: "success" | "error";
@@ -248,13 +441,38 @@ function PublicProfileSettingsForm({
     });
   };
 
+  const handleAddSkill = (e?: React.MouseEvent | React.KeyboardEvent) => {
+    if (e) e.preventDefault();
+    const newSkill = skillInput.trim();
+    if (newSkill && !formData.skills.includes(newSkill)) {
+      setFormData({
+        ...formData,
+        skills: [...formData.skills, newSkill],
+      });
+      setSkillInput("");
+    }
+  };
+
+  const handleRemoveSkill = (skillToRemove: string) => {
+    setFormData({
+      ...formData,
+      skills: formData.skills.filter((skill) => skill !== skillToRemove),
+    });
+  };
+
+  const handleSkillKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddSkill(e);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setStatus(null);
 
     try {
-      // 1. Get the current user's secure session token
       const {
         data: { session },
         error: sessionError,
@@ -264,14 +482,13 @@ function PublicProfileSettingsForm({
         throw new Error("You must be logged in to save settings.");
       }
 
-      // 2. Send data to your localhost:8000 REST API
       const response = await fetch(
         "http://localhost:8000/api/profile/student",
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`, // Pass token for backend verification
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify(formData),
         },
@@ -311,7 +528,6 @@ function PublicProfileSettingsForm({
       {status && <StatusMessage type={status.type} message={status.message} />}
 
       <div className="grid grid-cols-1 gap-6 max-w-2xl">
-        {/* University & Degree */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
@@ -349,7 +565,6 @@ function PublicProfileSettingsForm({
           </div>
         </div>
 
-        {/* Grad Year & GPA */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
@@ -392,7 +607,82 @@ function PublicProfileSettingsForm({
           </div>
         </div>
 
-        {/* Links & Portfolio */}
+        <div>
+          <label
+            htmlFor="location"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Location
+          </label>
+          <div className="mt-1 flex rounded-md shadow-sm">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 sm:text-sm">
+              <MapPin className="w-4 h-4" />
+            </span>
+            <input
+              id="location"
+              name="location"
+              type="text"
+              value={formData.location}
+              onChange={handleInputChange}
+              placeholder="e.g. San Francisco, CA"
+              className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="skills"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Skills
+          </label>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 mt-1">
+            Add your top skills. Press Enter to add.
+          </p>
+          <div className="flex items-center gap-2 mb-3">
+            <input
+              id="skills"
+              type="text"
+              value={skillInput}
+              onChange={(e) => setSkillInput(e.target.value)}
+              onKeyDown={handleSkillKeyDown}
+              placeholder="e.g. React, Python, PostgreSQL..."
+              className="flex-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+            />
+            <button
+              type="button"
+              onClick={handleAddSkill}
+              className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-800/50 dark:text-blue-400 text-sm font-medium rounded-md transition-colors border border-blue-200 dark:border-blue-800/50"
+            >
+              Add
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mt-2 min-h-[32px]">
+            {formData.skills.map((skill) => (
+              <span
+                key={skill}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 transition-colors"
+              >
+                {skill}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveSkill(skill)}
+                  className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 focus:outline-none transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            ))}
+            {formData.skills.length === 0 && (
+              <span className="text-sm text-gray-400 dark:text-gray-500 italic py-1">
+                No skills added yet.
+              </span>
+            )}
+          </div>
+        </div>
+
         <div>
           <label
             htmlFor="github_url"
@@ -418,10 +708,28 @@ function PublicProfileSettingsForm({
 
         <div>
           <label
+            htmlFor="bio"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Bio
+          </label>
+          <textarea
+            id="bio"
+            name="bio"
+            rows={3}
+            value={formData.bio}
+            onChange={handleInputChange}
+            placeholder="Tell us about yourself in a short sentence or two"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border font-mono"
+          />
+        </div>
+
+        <div>
+          <label
             htmlFor="portfolio_md"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Portfolio / Bio (Markdown supported)
+            Portfolio (Markdown supported)
           </label>
           <textarea
             id="portfolio_md"
@@ -458,7 +766,7 @@ function PublicProfileSettingsForm({
   );
 }
 
-// 4. Account Settings Form
+// 5. Account Settings Form
 interface AccountSettingsProps {
   accountData: UserSettings["account"];
 }
@@ -528,7 +836,6 @@ function AccountSettings({ accountData }: AccountSettingsProps) {
 
     if (response.success) {
       alert("Account deleted successfully. Redirecting...");
-      // Redirect to login or home page
       window.location.href = "/";
     } else {
       alert(response.error || "Failed to delete account");
@@ -660,7 +967,7 @@ function AccountSettings({ accountData }: AccountSettingsProps) {
   );
 }
 
-// 5. Appearance Settings Form
+// 6. Appearance Settings Form
 interface AppearanceSettingsProps {
   appearanceData: UserSettings["appearance"];
 }
@@ -808,7 +1115,7 @@ function AppearanceSettings({ appearanceData }: AppearanceSettingsProps) {
   );
 }
 
-// 6. Notification Settings Form
+// 7. Notification Settings Form
 interface NotificationSettingsFormProps {
   notificationData: NotificationSettings;
 }

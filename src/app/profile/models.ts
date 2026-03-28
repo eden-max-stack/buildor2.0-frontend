@@ -153,6 +153,7 @@ export interface CodingStatistics {
 export interface ProfileProps {
   leftProfileCard: LeftProfileCard;
   contributionGrid: ContributionGrid;
+  portfolioMd: string;
   solvedQuestions: SolvedQuestion[];
   professorFeedback: ProfessorFeedback[];
   academicInfo?: AcademicInfo;
