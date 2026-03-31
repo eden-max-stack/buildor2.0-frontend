@@ -34,6 +34,7 @@ import {
 } from "./models";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 export default function Profile() {
   const [role, setRole] = useState<"STUDENT" | "TRAINER">("STUDENT");
@@ -1003,29 +1004,38 @@ function TrainerClassesTab({ classes }: TrainerClassesTabProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-right-4 duration-300">
       {classes.map((cls) => (
-        <div
-          key={cls.id}
-          className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 overflow-hidden hover:shadow-md transition-shadow group cursor-pointer"
+        <Link
+          key={cls.class_id}
+          href={`/classes/${cls.class_id}/edit`}
+          // 3. Add 'block' to the classes so the link takes up the full width/height
+          className="block border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 overflow-hidden hover:shadow-md transition-shadow group cursor-pointer"
         >
-          <div className="h-32 bg-gradient-to-r from-blue-500 to-indigo-600 relative p-4 flex items-end">
-            <h3 className="text-xl font-bold text-white drop-shadow-md truncate">
-              {cls.title}
-            </h3>
-          </div>
-          <div className="p-4 space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-              {cls.description}
-            </p>
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-800 pt-3">
-              <span className="flex items-center gap-1">
-                <BookOpen className="w-3 h-3" /> {cls.phases_count || 0} Phases
-              </span>
-              <span className="flex items-center gap-1">
-                <User className="w-3 h-3" /> {cls.students_count || 0} Enrolled
-              </span>
+          <div
+            key={cls.class_id}
+            className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 overflow-hidden hover:shadow-md transition-shadow group cursor-pointer"
+          >
+            <div className="h-32 bg-gradient-to-r from-blue-500 to-indigo-600 relative p-4 flex items-end">
+              <h3 className="text-xl font-bold text-white drop-shadow-md truncate">
+                {cls.title}
+              </h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                {cls.description}
+              </p>
+              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-800 pt-3">
+                <span className="flex items-center gap-1">
+                  <BookOpen className="w-3 h-3" /> {cls.phases_count || 0}{" "}
+                  Phases
+                </span>
+                <span className="flex items-center gap-1">
+                  <User className="w-3 h-3" /> {cls.students_count || 0}{" "}
+                  Enrolled
+                </span>
+              </div>
             </div>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   );
