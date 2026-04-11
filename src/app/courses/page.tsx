@@ -20,6 +20,7 @@ interface ClassItem {
   title: string;
   description: string;
   trainer_id: string;
+  trainer_name: string;
   phases_count: number;
   students_count: number;
 }
@@ -35,19 +36,22 @@ export default function BrowseClasses() {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        if (!session) throw new Error("Not authenticated");
+
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (session?.access_token) {
+          headers["Authorization"] = `Bearer ${session.access_token}`;
+        }
         const response = await fetch(
           "http://localhost:8000/api/classes/browse",
           {
             method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
+            headers,
           },
         );
         const data = await response.json();
-        setClasses(data);
+        setClasses(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to load classes", err);
       } finally {
@@ -144,7 +148,7 @@ export default function BrowseClasses() {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               {classes.map((cls) => (
                 <Link
-                  href={`/classes/${cls.class_id}`}
+                  href={`/courses/${cls.class_id}`}
                   key={cls.class_id}
                   className="group"
                 >
@@ -163,9 +167,12 @@ export default function BrowseClasses() {
                       </div>
                     </div>
 
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-brand-blue transition-colors mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-brand-blue transition-colors mb-1">
                       {cls.title}
                     </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">
+                      by {cls.trainer_name || "Unknown"}
+                    </p>
 
                     <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-8 flex-1">
                       {cls.description ||

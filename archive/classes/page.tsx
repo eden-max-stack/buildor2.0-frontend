@@ -39,10 +39,9 @@ interface MyGoal {
 }
 
 export default function LearningDashboard() {
-  const [userRole, setUserRole] = useState<"STUDENT" | "TRAINER">("STUDENT");
+  const [activeTab, setActiveTab] = useState("all");
   const [classes, setClasses] = useState<MyClass[]>([]);
   const [goals, setGoals] = useState<MyGoal[]>([]);
-  const [submissions, setSubmissions] = useState<MySubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -62,32 +61,27 @@ export default function LearningDashboard() {
         headers["Authorization"] = `Bearer ${session.access_token}`;
       }
 
-      const [roleRes, classesRes, goalsRes, subsRes] = await Promise.all([
-        fetch(`${API_BASE}/api/profile/me`, { headers }),
+      const [classesRes, goalsRes] = await Promise.all([
         fetch(`${API_BASE}/api/classes/my-classes`, { headers }),
         fetch(`${API_BASE}/api/classes/my-goals?limit=10`, { headers }),
-        fetch(`${API_BASE}/api/classes/my-submissions/recent?limit=3`, {
-          headers,
-        }),
       ]);
 
-      if (roleRes.ok) {
-        const roleData = await roleRes.json();
-        setUserRole(roleData.role); // "STUDENT" or "TRAINER"
-      }
       if (classesRes.ok) setClasses(await classesRes.json());
       if (goalsRes.ok) setGoals(await goalsRes.json());
-      if (subsRes.ok) setSubmissions(await subsRes.json());
     } catch (err) {
-      console.error("Dashboard page fetch error:", err);
+      console.error("Classes page fetch error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const displayClasses = classes.filter((c) =>
-    userRole === "TRAINER" ? c.role === "trainer" : c.role === "student",
-  );
+  // Filter classes by tab
+  const displayClasses =
+    activeTab === "all"
+      ? classes
+      : activeTab === "student"
+        ? classes.filter((c) => c.role === "student")
+        : classes.filter((c) => c.role === "trainer");
 
   // Today's goals: goals with target_date today or overdue
   const todayGoals = goals.filter((g) => {
@@ -291,17 +285,25 @@ export default function LearningDashboard() {
 
             {/* Right Main Content (Tabs & List) */}
             <main className="flex-1 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="inline-flex items-center gap-3 group">
-                  <div className="p-2 bg-brand-blue/10 dark:bg-brand-blue/20 rounded-lg">
-                    <BookOpen className="w-5 h-5 text-brand-blue" />
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    {userRole === "TRAINER"
-                      ? "Classes I Teach"
-                      : "Classes I'm Enrolled In"}
-                  </h2>
-                </div>
+              {/* Pill Tabs */}
+              <div className="flex items-center gap-2">
+                {[
+                  { key: "all", label: "All Classes" },
+                  { key: "student", label: "Enrolled" },
+                  { key: "trainer", label: "Teaching" },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                      activeTab === tab.key
+                        ? "bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900"
+                        : "bg-transparent text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-gray-400"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
 
               {/* Course List */}
@@ -352,7 +354,7 @@ export default function LearningDashboard() {
 
                           <div className="flex items-center gap-3">
                             <Link
-                              href={`/courses/${cls.class_id}`}
+                              href={`/classes/${cls.class_id}`}
                               className="flex-1 text-center bg-brand-blue text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors"
                             >
                               {cls.role === "trainer" ? "Open" : "Resume"}

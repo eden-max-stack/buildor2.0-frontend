@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Layout from "@/components/Layout";
 import {
   User,
   Lock,
   Bell,
   Github,
+  Link as LinkIcon,
   Save,
   Trash2,
   AlertTriangle,
@@ -20,6 +21,7 @@ import {
   X,
   Briefcase,
   Award,
+  Plus,
 } from "lucide-react";
 import {
   ThemeMode,
@@ -30,12 +32,12 @@ import {
   TrainerProfileFormData,
 } from "./models";
 import {
-  fetchUserSettings,
   changePassword,
   deleteAccount,
   updateAppearance,
   updateNotifications,
   validatePassword,
+  fetchUserSettings,
 } from "./settings-api";
 import { createClient } from "@/lib/supabase/client";
 
@@ -49,6 +51,9 @@ export default function ProfileSettings() {
   const [role, setRole] = useState<"STUDENT" | "TRAINER">("STUDENT");
   const [activeTab, setActiveTab] = useState<SettingsTab>("Public Profile");
   const [settings, setSettings] = useState<UserSettings | null>(null);
+  const [profileSeed, setProfileSeed] = useState<
+    TrainerProfileFormData | StudentProfileFormData | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -67,18 +72,72 @@ export default function ProfileSettings() {
         error: sessionError,
       } = await supabase.auth.getSession();
 
+      let userRole: "STUDENT" | "TRAINER" = "STUDENT";
       if (!sessionError && session) {
-        const userRole = session.user.user_metadata?.role || "STUDENT";
-        setRole(userRole);
+        const meRes = await fetch("http://localhost:8000/api/profile/me", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          userRole = meData?.role === "TRAINER" ? "TRAINER" : "STUDENT";
+          setRole(userRole);
+        }
+
+        const profileEndpoint =
+          userRole === "TRAINER"
+            ? "/api/profile/trainer"
+            : "/api/profile/student";
+        const profileRes = await fetch(
+          `http://localhost:8000${profileEndpoint}`,
+          {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          },
+        );
+
+        if (profileRes.ok) {
+          const profileJson = await profileRes.json();
+          if (userRole === "TRAINER") {
+            const seed: TrainerProfileFormData = {
+              title: profileJson?.title || "",
+              workplace: profileJson?.workplace || "",
+              bio: profileJson?.leftProfileCard?.profileDesc || "",
+              location: profileJson?.leftProfileCard?.location || "",
+              website: profileJson?.leftProfileCard?.website || "",
+              github_url:
+                profileJson?.externalLinks?.find(
+                  (l: any) => l?.platform === "GitHub",
+                )?.url || "",
+              availability_text: profileJson?.availability_text || "",
+            };
+            setProfileSeed(seed);
+          } else {
+            const seed: StudentProfileFormData = {
+              university: profileJson?.academicInfo?.university || "",
+              degree: profileJson?.academicInfo?.degree || "",
+              expected_grad_year: profileJson?.academicInfo?.expectedGraduation
+                ? Number(profileJson.academicInfo.expectedGraduation)
+                : "",
+              gpa: profileJson?.academicInfo?.gpa
+                ? Number(profileJson.academicInfo.gpa)
+                : "",
+              bio: profileJson?.leftProfileCard?.profileDesc || "",
+              portfolio_md: profileJson?.portfolioMd || "",
+              github_url:
+                profileJson?.externalLinks?.find(
+                  (l: any) => l?.platform === "GitHub",
+                )?.url || "",
+              location: profileJson?.leftProfileCard?.location || "",
+              skills: profileJson?.leftProfileCard?.skills || [],
+            };
+            setProfileSeed(seed);
+          }
+        }
       }
 
-      // 2. Fetch all user settings
+      // 2. Fetch mock settings for Account/Appearance/Notifications tabs (still mock-backed)
       const response = await fetchUserSettings();
-
       if (response.success && response.data) {
         setSettings(response.data);
-      } else {
-        console.error("Failed to load settings:", response.error);
       }
     } catch (err) {
       console.error("Error loading profile settings:", err);
@@ -89,7 +148,7 @@ export default function ProfileSettings() {
 
   // Helper to render the active form content
   const renderContent = () => {
-    if (loading || !settings) {
+    if (loading) {
       return (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -99,26 +158,27 @@ export default function ProfileSettings() {
 
     switch (activeTab) {
       case "Account":
+        if (!settings) return null;
         return <AccountSettings accountData={settings.account} />;
       case "Appearance":
+        if (!settings) return null;
         return <AppearanceSettings appearanceData={settings.appearance} />;
       case "Notifications":
+        if (!settings) return null;
         return (
           <NotificationSettingsForm notificationData={settings.notifications} />
         );
       default:
-        // --- DYNAMIC RENDERING BASED ON SUPABASE ROLE ---
         if (role === "TRAINER") {
           return (
             <TrainerProfileSettingsForm
-              // Cast to any to bypass strict UserSettings typings if needed
-              profileData={settings.publicProfile as any}
+              profileData={profileSeed as TrainerProfileFormData | undefined}
             />
           );
         } else {
           return (
             <StudentProfileSettingsForm
-              profileData={settings.publicProfile as any}
+              profileData={profileSeed as StudentProfileFormData | undefined}
             />
           );
         }
@@ -250,10 +310,39 @@ function TrainerProfileSettingsForm({
 }: TrainerProfileSettingsFormProps) {
   const supabase = createClient();
 
+  const initialRef = useRef<TrainerProfileFormData | null>(null);
+
   const [formData, setFormData] = useState<TrainerProfileFormData>({
     title: profileData?.title || "",
     workplace: profileData?.workplace || "",
+    bio: profileData?.bio || "",
+    location: profileData?.location || "",
+    website: profileData?.website || "",
+    github_url: profileData?.github_url || "",
+    availability_text: profileData?.availability_text || "",
   });
+
+  useEffect(() => {
+    const next: TrainerProfileFormData = {
+      title: profileData?.title || "",
+      workplace: profileData?.workplace || "",
+      bio: profileData?.bio || "",
+      location: profileData?.location || "",
+      website: profileData?.website || "",
+      github_url: profileData?.github_url || "",
+      availability_text: profileData?.availability_text || "",
+    };
+    setFormData(next);
+    initialRef.current = next;
+  }, [
+    profileData?.title,
+    profileData?.workplace,
+    profileData?.bio,
+    profileData?.location,
+    profileData?.website,
+    profileData?.github_url,
+    profileData?.availability_text,
+  ]);
 
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{
@@ -261,7 +350,92 @@ function TrainerProfileSettingsForm({
     message: string;
   } | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // --- Attestation (credential) management ---
+  const [attestations, setAttestations] = useState<any[]>([]);
+  const [attLoading, setAttLoading] = useState(false);
+  const [showAttForm, setShowAttForm] = useState(false);
+  const [newAtt, setNewAtt] = useState({
+    title: "",
+    description: "",
+    attachment_url: "",
+  });
+
+  const getAuthHeaders = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return session
+      ? {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        }
+      : null;
+  };
+
+  const fetchAttestations = async () => {
+    setAttLoading(true);
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+      const res = await fetch(
+        "http://localhost:8000/api/profile/trainer/attestations",
+        { headers },
+      );
+      if (res.ok) setAttestations(await res.json());
+    } catch (err) {
+      console.error("Error fetching attestations:", err);
+    } finally {
+      setAttLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAttestations();
+  }, []);
+
+  const handleCreateAttestation = async () => {
+    if (!newAtt.title.trim()) return;
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+      const res = await fetch(
+        "http://localhost:8000/api/profile/trainer/attestations",
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify(newAtt),
+        },
+      );
+      if (res.ok) {
+        setNewAtt({ title: "", description: "", attachment_url: "" });
+        setShowAttForm(false);
+        fetchAttestations();
+      }
+    } catch (err) {
+      console.error("Error creating attestation:", err);
+    }
+  };
+
+  const handleDeleteAttestation = async (id: string) => {
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+      await fetch(
+        `http://localhost:8000/api/profile/trainer/attestations/${id}`,
+        {
+          method: "DELETE",
+          headers,
+        },
+      );
+      fetchAttestations();
+    } catch (err) {
+      console.error("Error deleting attestation:", err);
+    }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
@@ -281,6 +455,24 @@ function TrainerProfileSettingsForm({
         throw new Error("You must be logged in to save settings.");
       }
 
+      const initial = initialRef.current;
+      const changedPayload: Partial<TrainerProfileFormData> = {};
+      if (initial) {
+        (Object.keys(formData) as (keyof TrainerProfileFormData)[]).forEach(
+          (k) => {
+            if (formData[k] !== initial[k]) {
+              changedPayload[k] = formData[k];
+            }
+          },
+        );
+      }
+
+      if (initial && Object.keys(changedPayload).length === 0) {
+        setStatus({ type: "success", message: "No changes to save." });
+        setSaving(false);
+        return;
+      }
+
       // Pointing to your FastAPI route
       const response = await fetch(
         "http://localhost:8000/api/profile/trainer",
@@ -290,7 +482,7 @@ function TrainerProfileSettingsForm({
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(initial ? changedPayload : formData),
         },
       );
 
@@ -303,6 +495,7 @@ function TrainerProfileSettingsForm({
         type: "success",
         message: "Trainer profile updated successfully!",
       });
+      initialRef.current = formData;
     } catch (err: any) {
       setStatus({ type: "error", message: err.message });
     } finally {
@@ -320,7 +513,7 @@ function TrainerProfileSettingsForm({
           Professional Identity
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Update your current title and where you work.
+          Update your trainer profile details.
         </p>
       </div>
       <hr className="border-gray-200 dark:border-gray-700" />
@@ -378,6 +571,231 @@ function TrainerProfileSettingsForm({
           </div>
         </div>
 
+        <div>
+          <label
+            htmlFor="location"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Location
+          </label>
+          <div className="mt-1 flex rounded-md shadow-sm">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 sm:text-sm">
+              <MapPin className="w-4 h-4" />
+            </span>
+            <input
+              id="location"
+              name="location"
+              type="text"
+              value={formData.location}
+              onChange={handleInputChange}
+              placeholder="e.g. Bengaluru, India"
+              className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="website"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Website
+          </label>
+          <div className="mt-1 flex rounded-md shadow-sm">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 sm:text-sm">
+              <LinkIcon className="w-4 h-4" />
+            </span>
+            <input
+              id="website"
+              name="website"
+              type="text"
+              value={formData.website}
+              onChange={handleInputChange}
+              placeholder="e.g. https://your-site.com"
+              className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="github_url"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            GitHub URL
+          </label>
+          <div className="mt-1 flex rounded-md shadow-sm">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 sm:text-sm">
+              <Github className="w-4 h-4" />
+            </span>
+            <input
+              id="github_url"
+              name="github_url"
+              type="url"
+              value={formData.github_url}
+              onChange={handleInputChange}
+              placeholder="https://github.com/yourusername"
+              className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="bio"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Bio
+          </label>
+          <textarea
+            id="bio"
+            name="bio"
+            rows={3}
+            value={formData.bio}
+            onChange={handleInputChange}
+            placeholder="A short bio for your trainer profile"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border font-mono"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="availability_text"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Availability
+          </label>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 mt-1">
+            Share your office hours / typical response time.
+          </p>
+          <textarea
+            id="availability_text"
+            name="availability_text"
+            rows={4}
+            value={formData.availability_text}
+            onChange={handleInputChange}
+            placeholder="e.g. Office hours: Mon/Wed 7-9pm IST. Replies within 24 hours."
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border font-mono"
+          />
+        </div>
+
+        {/* --- Credentials / Attestations Section --- */}
+        <div className="pt-2">
+          <hr className="border-gray-200 dark:border-gray-700 mb-6" />
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-base font-medium text-gray-900 dark:text-white">
+                Credentials &amp; Areas of Expertise
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Add certifications, awards, or skills that appear on your
+                profile.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAttForm(!showAttForm)}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Add
+            </button>
+          </div>
+
+          {showAttForm && (
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800 mb-4 space-y-3">
+              <input
+                type="text"
+                value={newAtt.title}
+                onChange={(e) =>
+                  setNewAtt({ ...newAtt, title: e.target.value })
+                }
+                placeholder="Credential title (e.g. AWS Solutions Architect)"
+                className="block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 border sm:text-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <textarea
+                value={newAtt.description}
+                onChange={(e) =>
+                  setNewAtt({ ...newAtt, description: e.target.value })
+                }
+                placeholder="Short description (optional)"
+                rows={2}
+                className="block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 border sm:text-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <input
+                type="url"
+                value={newAtt.attachment_url}
+                onChange={(e) =>
+                  setNewAtt({ ...newAtt, attachment_url: e.target.value })
+                }
+                placeholder="Attachment URL (optional)"
+                className="block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 border sm:text-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleCreateAttestation}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors"
+                >
+                  Save Credential
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAttForm(false);
+                    setNewAtt({
+                      title: "",
+                      description: "",
+                      attachment_url: "",
+                    });
+                  }}
+                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {attLoading ? (
+            <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Loading
+              credentials...
+            </div>
+          ) : attestations.length > 0 ? (
+            <div className="space-y-2">
+              {attestations.map((att: any) => (
+                <div
+                  key={att.attestation_id}
+                  className="flex items-start justify-between p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                >
+                  <div>
+                    <div className="font-medium text-sm text-gray-900 dark:text-white">
+                      {att.title}
+                    </div>
+                    {att.description && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {att.description}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteAttestation(att.attestation_id)}
+                    className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors ml-3 mt-0.5"
+                    title="Remove credential"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400 dark:text-gray-500 italic py-2">
+              No credentials added yet.
+            </p>
+          )}
+        </div>
+
         <div className="pt-4">
           <button
             type="submit"
@@ -412,6 +830,8 @@ function StudentProfileSettingsForm({
 }: StudentProfileSettingsFormProps) {
   const supabase = createClient();
 
+  const initialRef = useRef<StudentProfileFormData | null>(null);
+
   const [formData, setFormData] = useState<StudentProfileFormData>({
     university: profileData?.university || "",
     degree: profileData?.degree || "",
@@ -423,6 +843,32 @@ function StudentProfileSettingsForm({
     location: profileData?.location || "",
     skills: profileData?.skills || [],
   });
+
+  useEffect(() => {
+    const next: StudentProfileFormData = {
+      university: profileData?.university || "",
+      degree: profileData?.degree || "",
+      expected_grad_year: profileData?.expected_grad_year || "",
+      gpa: profileData?.gpa || "",
+      bio: profileData?.bio || "",
+      portfolio_md: profileData?.portfolio_md || "",
+      github_url: profileData?.github_url || "",
+      location: profileData?.location || "",
+      skills: profileData?.skills || [],
+    };
+    setFormData(next);
+    initialRef.current = next;
+  }, [
+    profileData?.university,
+    profileData?.degree,
+    profileData?.expected_grad_year,
+    profileData?.gpa,
+    profileData?.bio,
+    profileData?.portfolio_md,
+    profileData?.github_url,
+    profileData?.location,
+    JSON.stringify(profileData?.skills || []),
+  ]);
 
   const [skillInput, setSkillInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -482,6 +928,29 @@ function StudentProfileSettingsForm({
         throw new Error("You must be logged in to save settings.");
       }
 
+      const initial = initialRef.current;
+      const changedPayload: Partial<StudentProfileFormData> = {};
+      if (initial) {
+        (Object.keys(formData) as (keyof StudentProfileFormData)[]).forEach(
+          (k) => {
+            const a = formData[k];
+            const b = initial[k];
+            if (Array.isArray(a) && Array.isArray(b)) {
+              if (JSON.stringify(a) !== JSON.stringify(b))
+                changedPayload[k] = a as any;
+              return;
+            }
+            if (a !== b) changedPayload[k] = a as any;
+          },
+        );
+      }
+
+      if (initial && Object.keys(changedPayload).length === 0) {
+        setStatus({ type: "success", message: "No changes to save." });
+        setSaving(false);
+        return;
+      }
+
       const response = await fetch(
         "http://localhost:8000/api/profile/student",
         {
@@ -490,7 +959,7 @@ function StudentProfileSettingsForm({
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(initial ? changedPayload : formData),
         },
       );
 
@@ -503,6 +972,7 @@ function StudentProfileSettingsForm({
         type: "success",
         message: "Student profile updated successfully!",
       });
+      initialRef.current = formData;
     } catch (err: any) {
       setStatus({ type: "error", message: err.message });
     } finally {

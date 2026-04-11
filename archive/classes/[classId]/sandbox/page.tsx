@@ -19,6 +19,7 @@ import {
 import { useState, useEffect, useRef, type RefObject } from "react";
 import { useSearchParams } from "next/navigation";
 import * as d3 from "d3";
+import { createClient } from "@/lib/supabase/client";
 
 // ============================================
 // TYPES & INTERFACES
@@ -106,11 +107,12 @@ interface GraphData {
 export default function CodeSandbox() {
   const searchParams = useSearchParams();
   const API_BASE = "http://localhost:8000";
-  const USER_ID = "10000000-0000-0000-0000-000000000001"; // TODO: Get from auth context
+  const supabase = createClient();
 
   // Question state
   const [question, setQuestion] = useState<Question | null>(null);
   const [isLoadingQuestion, setIsLoadingQuestion] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Code editor state
   const [code, setCode] = useState(`def solution(nums, target):
@@ -151,6 +153,16 @@ export default function CodeSandbox() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setCurrentUserId(session?.user?.id ?? null);
+    };
+    loadCurrentUser();
+  }, []);
+
   const fetchQuestionDetails = async (questionId: string) => {
     setIsLoadingQuestion(true);
     try {
@@ -158,7 +170,17 @@ export default function CodeSandbox() {
       if (!response.ok) {
         throw new Error(`Failed to fetch question: ${response.status}`);
       }
-      const data: Question = await response.json();
+      const data = await response.json();
+      // Normalize constraints: backend returns string or null, frontend expects string[]
+      if (typeof data.constraints === "string") {
+        data.constraints = data.constraints.split("\n").filter(Boolean);
+      } else if (!Array.isArray(data.constraints)) {
+        data.constraints = [];
+      }
+      // Normalize test_cases
+      if (!Array.isArray(data.test_cases)) {
+        data.test_cases = [];
+      }
       setQuestion(data);
 
       // Set initial code template if available
@@ -183,6 +205,10 @@ export default function CodeSandbox() {
 
   const handleSubmitCode = async () => {
     if (!question) return;
+    if (!currentUserId) {
+      alert("You must be signed in to submit code.");
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmissionResult(null);
@@ -195,7 +221,7 @@ export default function CodeSandbox() {
         },
         body: JSON.stringify({
           question_id: question.id,
-          user_id: USER_ID,
+          user_id: currentUserId,
           code: code,
           language: "python",
         }),
@@ -221,6 +247,10 @@ export default function CodeSandbox() {
 
   const handleGetHint = async () => {
     if (!question) return;
+    if (!currentUserId) {
+      alert("You must be signed in to get hints.");
+      return;
+    }
 
     setIsLoadingHint(true);
 
@@ -232,7 +262,7 @@ export default function CodeSandbox() {
         },
         body: JSON.stringify({
           question_id: question.id,
-          user_id: USER_ID,
+          user_id: currentUserId,
           user_code: code,
           skill_level: "medium",
         }),
@@ -312,7 +342,7 @@ export default function CodeSandbox() {
     const treeLayout = d3
       .tree<any>()
       .size([width - 100, height - 100])
-      .separation((a, b) => (a.parent === b.parent ? 2 : 3));
+      .separation((a, b) => (a.parent === b.parent ? 3 : 4));
 
     // Convert AST to d3 hierarchy
     const root = d3.hierarchy(astData.root, (d: any) => d.children);
@@ -355,31 +385,30 @@ export default function CodeSandbox() {
 
     node
       .append("circle")
-      .attr("r", 8)
+      .attr("r", 10)
       .attr("fill", (d: any) => {
         if (d.data.type === "function_definition") return "#3b82f6";
         if (d.data.type === "if_statement") return "#10b981";
         if (d.data.type === "assignment") return "#f59e0b";
         return "#6366f1";
       })
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 2);
+      .attr("stroke", "#1e293b")
+      .attr("stroke-width", 1.5);
 
     node
       .append("text")
       .attr("x", 0)
-      .attr("y", -15)
+      .attr("y", -16)
       .attr("text-anchor", "middle")
-      .attr("dominant-baseline", "middle")
-      .attr("font-size", "11px")
-      .attr("font-weight", "600")
-      .attr("fill", "#ffffff")
-      .attr("text-shadow", "0 1px 2px rgba(0,0,0,0.5)")
+      .attr("dominant-baseline", "auto")
+      .attr("font-size", "10px")
+      .attr("font-weight", "500")
+      .attr("fill", "#1e293b")
       .attr("pointer-events", "none")
-      .attr("paint-order", "stroke")
-      .attr("stroke", "#000000")
-      .attr("stroke-width", "0.3px")
-      .text((d: any) => d.data.type);
+      .text((d: any) => {
+        const t: string = d.data.type || "";
+        return t.length > 13 ? t.slice(0, 12) + "…" : t;
+      });
 
     // Center the tree with better calculation
     const bounds = (g.node() as SVGGElement | null)?.getBBox();

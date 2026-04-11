@@ -140,5 +140,10 @@ export interface StudentProfileFormData {
 export interface TrainerProfileFormData {
   title: string;
   workplace: string;
+  bio: string;
+  location: string;
+  website: string;
+  github_url: string;
+  availability_text: string;
 }
 

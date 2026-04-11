@@ -225,6 +225,55 @@ const ALL_TAGS = [
   "String",
 ];
 
+// --- Types ---
+interface ClassDetail {
+  class_id: string;
+  title: string;
+  description: string;
+  created_at: string;
+  trainer_id: string;
+  trainer_name: string;
+  students_count: number;
+}
+
+interface Phase {
+  phase_id: string;
+  title: string;
+  description: string | null;
+  order_index: number;
+  materials: Material[];
+}
+
+interface Material {
+  material_id: string;
+  type: string;
+  title: string;
+  content_url: string | null;
+  question_id: string | null;
+  order_index: number;
+}
+
+interface Quiz {
+  quiz_id: string;
+  title: string;
+  questions: QuizQuestion[];
+}
+
+interface QuizQuestion {
+  question_id: string;
+  points: number;
+  title: string | null;
+  type: string | null;
+  difficulty: string | null;
+  tags: string[];
+}
+
+interface EnrollmentStatus {
+  is_enrolled: boolean;
+  is_trainer: boolean;
+  enrolled_at: string | null;
+}
+
 export default function ClassHub() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("questions"); // Set to questions by default for testing
@@ -258,7 +307,9 @@ export default function ClassHub() {
   //   const handleQuestionClick = (question: Question) => {
   const handleQuestionClick = () => {
     // router.push(`/classes/${classInfo.id}/sandbox?id=${question.id}`);
-    router.push(`/classes/${classInfo.id}/sandbox?id=14`); // default set to 14 question as it is the only one which has proper mock data
+    router.push(
+      `/classes/${classInfo.id}/sandbox?id=597d8c2e-4b1a-4f92-9a3c-8e7d2f1b0a54`,
+    ); // default set to 14 question as it is the only one which has proper mock data
   };
 
   const getDifficultyColor = (difficulty: string) => {

@@ -21,10 +21,6 @@ import {
   Briefcase,
   Loader2,
   PlusCircle,
-  CheckSquare,
-  MessageCircle,
-  AlertCircle,
-  ArrowRight,
 } from "lucide-react";
 import {
   ProfileProps,
@@ -57,7 +53,13 @@ export default function Profile() {
           return;
         }
 
-        const userRole = session.user.user_metadata?.role || "STUDENT";
+        const meRes = await fetch("http://localhost:8000/api/profile/me", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!meRes.ok) throw new Error("Failed to determine role");
+        const meData = await meRes.json();
+        const userRole: "STUDENT" | "TRAINER" =
+          meData?.role === "TRAINER" ? "TRAINER" : "STUDENT";
         setRole(userRole);
         setActiveTab(userRole === "TRAINER" ? "My Classes" : "Overview");
 
@@ -141,21 +143,34 @@ export default function Profile() {
 
   // --- DYNAMIC TABS CONFIGURATION ---
   const studentTabs = ["Overview", "Questions Solved", "Portfolio"];
-  // NEW: Replaced "Questions Authored" with "Action Items"
-  const trainerTabs = ["My Classes", "Action Items", "About Me"];
+  const trainerTabs = ["My Classes", "About Me", "Credentials", "Availability"];
   const currentTabs = role === "TRAINER" ? trainerTabs : studentTabs;
 
   const renderContent = () => {
     if (role === "TRAINER") {
       switch (activeTab) {
-        case "Action Items":
-          return <TrainerActionItemsTab />;
         case "About Me":
           return (
-            <PortfolioTab
-              portfolioMd={portfolioMd}
-              externalLinks={externalLinks}
-              professorFeedback={[]}
+            <TrainerAboutTab
+              title={profileData?.title}
+              workplace={profileData?.workplace}
+              skills={leftProfileCard?.skills || []}
+              attestations={profileData?.attestations || []}
+              reviews={profileData?.reviews || []}
+              averageRating={profileData?.average_rating}
+              ratingCount={profileData?.rating_count || 0}
+            />
+          );
+        case "Credentials":
+          return (
+            <TrainerCredentialsTab
+              attestations={profileData?.attestations || []}
+            />
+          );
+        case "Availability":
+          return (
+            <TrainerAvailabilityTab
+              availabilityText={profileData?.availability_text || ""}
             />
           );
         default:
@@ -237,7 +252,7 @@ export default function Profile() {
                     <div className="flex items-center gap-2 font-medium text-gray-900 dark:text-gray-200">
                       <Briefcase className="w-4 h-4" />
                       {profileData?.title || "Senior Instructor"} at{" "}
-                      {profileData?.organization || "Buildor"}
+                      {profileData?.workplace || "Buildor"}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
@@ -268,15 +283,30 @@ export default function Profile() {
                       </a>
                     </div>
                   )}
-                  <div className="flex items-center gap-2">
-                    <Github className="w-4 h-4" />
-                    <a
-                      href={`https://github.com/${leftProfileCard?.username}`}
-                      className="hover:text-blue-500"
-                    >
-                      github.com/{leftProfileCard?.username}
-                    </a>
-                  </div>
+                  {(() => {
+                    const ghLink = externalLinks?.find(
+                      (l: any) => l?.platform === "GitHub",
+                    );
+                    const ghUrl = ghLink?.url || "";
+                    if (!ghUrl) return null;
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Github className="w-4 h-4" />
+                        <a
+                          href={
+                            ghUrl.startsWith("http")
+                              ? ghUrl
+                              : `https://${ghUrl}`
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                          className="hover:text-blue-500 truncate"
+                        >
+                          {ghUrl.replace(/^https?:\/\//, "")}
+                        </a>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -306,6 +336,7 @@ export default function Profile() {
                   {currentTabs.map((tab) => (
                     <button
                       key={tab}
+                      id={`profile-tab-${tab}`}
                       onClick={() => setActiveTab(tab)}
                       className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                         activeTab === tab
@@ -341,126 +372,253 @@ export default function Profile() {
 // SUB-COMPONENTS
 // ---------------------------------------------------------
 
-// --- NEW TRAINER TAB: ACTION ITEMS ---
-function TrainerActionItemsTab() {
-  // Mock Data for demonstration
-  const actionItems = [
-    {
-      id: "1",
-      type: "GRADE",
-      title: "Review Final Project Submission",
-      context: "Advanced System Design • Student: Sarah Jenkins",
-      time: "Due Today",
-      urgency: "high",
-    },
-    {
-      id: "2",
-      type: "QUESTION",
-      title: "Clarification on Dijkstra's Algorithm",
-      context: "Algorithms 101 • Student: Mike Ross",
-      time: "2 hours ago",
-      urgency: "medium",
-    },
-    {
-      id: "3",
-      type: "GRADE",
-      title: "Grade Midterm SQL Queries",
-      context: "Database Mastery • 14 Pending",
-      time: "Due Tomorrow",
-      urgency: "medium",
-    },
-    {
-      id: "4",
-      type: "SYSTEM",
-      title: "Update Expired Video Link",
-      context: "React Fundamentals • Module 2",
-      time: "3 days ago",
-      urgency: "low",
-    },
-  ];
+function TrainerAboutTab({
+  title,
+  workplace,
+  skills,
+  attestations,
+  reviews,
+  averageRating,
+  ratingCount,
+}: {
+  title?: string;
+  workplace?: string;
+  skills: string[];
+  attestations: any[];
+  reviews: any[];
+  averageRating?: number | null;
+  ratingCount: number;
+}) {
+  const topAttestations = (
+    Array.isArray(attestations) ? attestations : []
+  ).slice(0, 3);
+  const reviewsList = Array.isArray(reviews) ? reviews : [];
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
-          <h4 className="text-orange-800 dark:text-orange-300 text-sm font-medium flex items-center gap-2">
-            <CheckSquare className="w-4 h-4" /> Needs Grading
-          </h4>
-          <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 mt-1">
-            15
-          </p>
-        </div>
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <h4 className="text-blue-800 dark:text-blue-300 text-sm font-medium flex items-center gap-2">
-            <MessageCircle className="w-4 h-4" /> Unanswered Q&A
-          </h4>
-          <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">
-            4
-          </p>
-        </div>
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-          <h4 className="text-green-800 dark:text-green-300 text-sm font-medium flex items-center gap-2">
-            <BookOpen className="w-4 h-4" /> Classes Active
-          </h4>
-          <p className="text-2xl font-bold text-green-900 dark:text-green-100 mt-1">
-            2
-          </p>
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+          Instructor Overview
+        </h2>
+        <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+          <div className="flex items-center gap-2">
+            <Briefcase className="w-4 h-4" />
+            <span className="font-medium text-gray-900 dark:text-gray-200">
+              {title || "Trainer"}
+            </span>
+            <span>at</span>
+            <span className="font-medium text-gray-900 dark:text-gray-200">
+              {workplace || "Buildor"}
+            </span>
+          </div>
+          {averageRating != null && (
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-yellow-500 text-base">
+                {"★".repeat(Math.round(averageRating))}
+                {"☆".repeat(5 - Math.round(averageRating))}
+              </span>
+              <span className="font-medium text-gray-900 dark:text-gray-200">
+                {averageRating.toFixed(1)}
+              </span>
+              <span className="text-gray-500">
+                ({ratingCount} {ratingCount === 1 ? "rating" : "ratings"})
+              </span>
+            </div>
+          )}
+          <div>
+            This profile highlights your teaching credentials, areas of
+            expertise, and availability.
+          </div>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-          Your Inbox
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+          Areas of Expertise
         </h3>
-        {actionItems.map((item) => (
-          <div
-            key={item.id}
-            className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-lg hover:shadow-sm transition-all"
-          >
-            <div className="flex items-start gap-4">
-              <div
-                className={`mt-1 p-2 rounded-full ${
-                  item.type === "GRADE"
-                    ? "bg-orange-100 text-orange-600 dark:bg-orange-900/50"
-                    : item.type === "QUESTION"
-                      ? "bg-blue-100 text-blue-600 dark:bg-blue-900/50"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-800"
-                }`}
+        {skills?.length ? (
+          <div className="flex flex-wrap gap-2">
+            {skills.map((skill) => (
+              <span
+                key={skill}
+                className="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800"
               >
-                {item.type === "GRADE" && <CheckSquare className="w-4 h-4" />}
-                {item.type === "QUESTION" && (
-                  <MessageCircle className="w-4 h-4" />
+                {skill}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No expertise added yet.
+          </p>
+        )}
+      </div>
+
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+            Recent Credentials
+          </h3>
+          <button
+            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            onClick={() => {
+              const el = document.getElementById("profile-tab-Credentials");
+              el?.click();
+            }}
+          >
+            View all
+          </button>
+        </div>
+        {topAttestations.length ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {topAttestations.map((att: any) => (
+              <div
+                key={att.attestation_id || att.title}
+                className="p-4 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+              >
+                <div className="font-semibold text-sm text-gray-900 dark:text-white">
+                  {att.title}
+                </div>
+                {att.description && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {att.description}
+                  </div>
                 )}
-                {item.type === "SYSTEM" && <AlertCircle className="w-4 h-4" />}
               </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors cursor-pointer">
-                  {item.title}
-                </h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                  {item.context}
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No credentials added yet.
+          </p>
+        )}
+      </div>
+
+      {/* Anonymous Feedback / Reviews */}
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageSquare className="w-5 h-5 text-gray-500" />
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+            Anonymous Feedback
+          </h3>
+        </div>
+        {reviewsList.length > 0 ? (
+          <div className="space-y-4">
+            {reviewsList.map((review: any) => (
+              <div
+                key={review.review_id}
+                className="p-4 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+              >
+                <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+                  &quot;{review.content}&quot;
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  {review.created_at
+                    ? new Date(review.created_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : ""}
                 </p>
               </div>
-            </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No feedback received yet.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
-            <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 pl-12 sm:pl-0 border-t sm:border-t-0 border-gray-100 dark:border-gray-800 pt-3 sm:pt-0">
-              <span
-                className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                  item.urgency === "high"
-                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                    : item.urgency === "medium"
-                      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                }`}
-              >
-                {item.time}
-              </span>
-              <button className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
-                Resolve <ArrowRight className="w-4 h-4" />
-              </button>
+function TrainerCredentialsTab({ attestations }: { attestations: any[] }) {
+  const items = Array.isArray(attestations) ? attestations : [];
+
+  return (
+    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+          Credentials
+        </h2>
+      </div>
+
+      {items.length ? (
+        <div className="space-y-4">
+          {items.map((att: any) => (
+            <div
+              key={att.attestation_id || att.title}
+              className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900"
+            >
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {att.title}
+              </h3>
+              {att.description && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  {att.description}
+                </p>
+              )}
+              {att.attachment_url && (
+                <div className="mt-4">
+                  <a
+                    href={att.attachment_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                  >
+                    View attachment <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-10 bg-white dark:bg-gray-900 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No credentials added yet.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TrainerAvailabilityTab({
+  availabilityText,
+}: {
+  availabilityText: string;
+}) {
+  return (
+    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+      <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+        Availability
+      </h2>
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
+        {availabilityText ? (
+          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
+            {availabilityText}
+          </p>
+        ) : (
+          <div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              No availability info set yet. Update it from your profile
+              settings.
+            </p>
+            <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 space-y-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Add office hours (e.g. Mon/Wed 7-9pm IST)
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Set response SLAs (e.g. replies within 24 hours)
+              </div>
             </div>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

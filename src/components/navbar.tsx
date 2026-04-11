@@ -58,6 +58,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Dashboard", href: "/dashboard" },
+    { name: "Explore", href: "/courses" },
     { name: "Leaderboard", href: "/leaderboard" },
   ];
 
@@ -120,7 +121,7 @@ export default function Navbar() {
 
             {/* Profile */}
             <Link
-              href="/profile"
+              href="/profile/@me"
               className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               title="My Profile"
             >
