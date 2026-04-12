@@ -38,11 +38,35 @@ interface MyGoal {
   completed_items: number;
 }
 
+interface SubmissionResult {
+  id: string;
+  question_id: string;
+  user_id: string;
+  status: "accepted" | "wrong_answer" | "runtime_error" | "time_limit_exceeded";
+  test_cases_passed: number;
+  total_test_cases: number;
+  runtime_ms?: number;
+  memory_kb?: number;
+  test_results: TestCaseResult[];
+  error_message?: string;
+  submitted_at: string;
+}
+
+interface TestCaseResult {
+  test_case_id: string;
+  passed: boolean;
+  input: Record<string, any>;
+  expected_output: any;
+  actual_output?: any;
+  error_message?: string;
+  is_sample: boolean;
+}
+
 export default function LearningDashboard() {
   const [userRole, setUserRole] = useState<"STUDENT" | "TRAINER">("STUDENT");
   const [classes, setClasses] = useState<MyClass[]>([]);
   const [goals, setGoals] = useState<MyGoal[]>([]);
-  const [submissions, setSubmissions] = useState<MySubmission[]>([]);
+  const [submissions, setSubmissions] = useState<SubmissionResult[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -65,7 +89,7 @@ export default function LearningDashboard() {
       const [roleRes, classesRes, goalsRes, subsRes] = await Promise.all([
         fetch(`${API_BASE}/api/profile/me`, { headers }),
         fetch(`${API_BASE}/api/classes/my-classes`, { headers }),
-        fetch(`${API_BASE}/api/classes/my-goals?limit=10`, { headers }),
+        fetch(`${API_BASE}/api/goals?limit=10`, { headers }),
         fetch(`${API_BASE}/api/classes/my-submissions/recent?limit=3`, {
           headers,
         }),
@@ -85,19 +109,45 @@ export default function LearningDashboard() {
     }
   };
 
+  // Add this inside your component, below the loadData function
+  const handleCompleteGoal = async (goalId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering any parent click events
+
+    // Optimistically update the UI to instantly mark it as done
+    setGoals((prev) =>
+      prev.map((g) =>
+        g.goal_id === goalId ? { ...g, completed_items: g.total_items } : g,
+      ),
+    );
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
+      await fetch(`${API_BASE}/api/goals/${goalId}/complete`, {
+        method: "PUT",
+        headers,
+      });
+    } catch (err) {
+      console.error("Failed to complete goal:", err);
+      // If it fails, reload the data to revert the optimistic update
+      loadData();
+    }
+  };
+
   const displayClasses = classes.filter((c) =>
     userRole === "TRAINER" ? c.role === "trainer" : c.role === "student",
   );
 
-  // Today's goals: goals with target_date today or overdue
-  const todayGoals = goals.filter((g) => {
-    if (!g.target_date) return false;
-    const target = new Date(g.target_date);
-    const today = new Date();
-    target.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    return target.getTime() <= today.getTime();
-  });
+  // Replace the old todayGoals block with this:
+  const upcomingGoals = goals.filter((g) => g.completed_items < g.total_items);
 
   // Calendar helpers
   const now = new Date();
@@ -173,42 +223,60 @@ export default function LearningDashboard() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Sidebar (Goals & Calendar) */}
             <aside className="w-full lg:w-80 shrink-0 space-y-6">
-              {/* Today's Goals */}
+              {/* Upcoming Goals */}
               <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-xl p-6 shadow-sm">
                 <h2 className="font-bold text-gray-900 dark:text-white mb-4">
-                  Today&apos;s goals
+                  Upcoming goals
                 </h2>
                 <div className="space-y-4">
-                  {todayGoals.length > 0 ? (
-                    todayGoals.map((goal) => (
+                  {upcomingGoals.length > 0 ? (
+                    upcomingGoals.map((goal) => (
                       <div
                         key={goal.goal_id}
                         className="flex items-start gap-3 group cursor-pointer"
                       >
-                        <Star
-                          className={`w-5 h-5 mt-0.5 transition-colors ${
-                            goal.completed_items >= goal.total_items &&
-                            goal.total_items > 0
-                              ? "text-brand-amber"
-                              : "text-gray-300 dark:text-gray-600 group-hover:text-brand-amber"
-                          }`}
-                          fill="currentColor"
-                        />
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                          <span className="underline decoration-gray-300 dark:decoration-gray-600 group-hover:decoration-brand-amber underline-offset-2">
-                            {goal.title}
-                          </span>
-                          {goal.total_items > 0 && (
-                            <span className="text-gray-400 dark:text-gray-500 ml-1 font-mono text-xs">
-                              · {goal.completed_items}/{goal.total_items}
+                        <button
+                          onClick={(e) => handleCompleteGoal(goal.goal_id, e)}
+                          title="Mark as complete"
+                          className="mt-0.5 hover:scale-125 active:scale-95 transition-transform"
+                        >
+                          <Star
+                            className={`w-5 h-5 transition-colors ${
+                              goal.completed_items >= goal.total_items &&
+                              goal.total_items > 0
+                                ? "text-brand-amber"
+                                : "text-gray-300 dark:text-gray-600 hover:text-brand-amber"
+                            }`}
+                            fill="currentColor"
+                          />
+                        </button>
+                        <div className="flex flex-col">
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            <span className="underline decoration-gray-300 dark:decoration-gray-600 group-hover:decoration-brand-amber underline-offset-2">
+                              {goal.title}
+                            </span>
+                            {goal.total_items > 0 && (
+                              <span className="text-gray-400 dark:text-gray-500 ml-1 font-mono text-xs">
+                                · {goal.completed_items}/{goal.total_items}
+                              </span>
+                            )}
+                          </p>
+                          {/* NEW: Let's actually show the date so the user knows when it's due! */}
+                          {goal.target_date && (
+                            <span className="text-xs text-brand-blue/80 font-medium mt-0.5">
+                              Due:{" "}
+                              {new Date(goal.target_date).toLocaleDateString(
+                                undefined,
+                                { month: "short", day: "numeric" },
+                              )}
                             </span>
                           )}
-                        </p>
+                        </div>
                       </div>
                     ))
                   ) : (
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      No goals due today.
+                      No upcoming goals.
                     </p>
                   )}
                 </div>
