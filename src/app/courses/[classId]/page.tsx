@@ -769,6 +769,16 @@ export default function BrowseClassDetail() {
                               {student.email}
                             </p>
                           </div>
+
+                          <Link
+                            href={`/courses/${classId}/reports/${student.user_id}`}
+                            className="shrink-0 flex items-center gap-2 px-3 py-1.5 bg-brand-blue/10 text-brand-blue hover:bg-brand-blue hover:text-white rounded-lg text-sm font-medium transition-colors"
+                          >
+                            <FileText className="w-4 h-4" />
+                            <span className="hidden sm:inline">
+                              View Report
+                            </span>
+                          </Link>
                           <div className="text-xs text-gray-400 whitespace-nowrap">
                             {new Date(student.enrolled_at).toLocaleDateString()}
                           </div>

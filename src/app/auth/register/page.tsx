@@ -261,6 +261,7 @@ export default function Register() {
                       className="w-full rounded px-3 py-2 border outline-none focus:ring-2 focus:ring-brand-blue pr-10 bg-white dark:bg-[#0f172a] border-gray-300 dark:border-slate-700 text-black dark:text-white"
                       placeholder="Create a password"
                       value={formData.password}
+                      autoComplete="new-password"
                       onChange={(e) =>
                         setFormData({ ...formData, password: e.target.value })
                       }
